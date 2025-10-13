@@ -75,17 +75,7 @@ GridLayout {
         }
     }
 
-    Rect {
-        Layout.row: 0
-        Layout.column: 5
-        Layout.rowSpan: 2
-        Layout.preferredWidth: media.implicitWidth
-        Layout.fillHeight: true
-
-        Media {
-            id: media
-        }
-    }
+    // Media moved to persistent right sidebar in Content.qml
 
     component Rect: StyledRect {
         radius: Appearance.rounding.small

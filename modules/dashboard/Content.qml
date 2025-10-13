@@ -14,8 +14,8 @@ Item {
     required property PersistentProperties visibilities
     required property PersistentProperties state
     required property FileDialog facePicker
-    readonly property real nonAnimWidth: view.implicitWidth + viewWrapper.anchors.margins * 2
-    readonly property real nonAnimHeight: tabs.implicitHeight + tabs.anchors.topMargin + view.implicitHeight + viewWrapper.anchors.margins * 2
+    readonly property real nonAnimWidth: view.implicitWidth + viewWrapper.anchors.margins * 2 + gifSidebar.implicitWidth + gifSidebar.anchors.margins * 2
+    readonly property real nonAnimHeight: tabs.implicitHeight + tabs.anchors.topMargin + Math.max(view.implicitHeight + viewWrapper.anchors.margins * 2, gifSidebar.implicitHeight + gifSidebar.anchors.margins * 2)
 
     implicitWidth: nonAnimWidth
     implicitHeight: nonAnimHeight
@@ -33,12 +33,24 @@ Item {
         state: root.state
     }
 
+    // Persistent right sidebar: GIF + controls
+    GifPane {
+        id: gifSidebar
+
+        anchors.top: tabs.bottom
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        anchors.margins: Appearance.padding.large
+
+        visibilities: root.visibilities
+    }
+
     ClippingRectangle {
         id: viewWrapper
 
         anchors.top: tabs.bottom
         anchors.left: parent.left
-        anchors.right: parent.right
+        anchors.right: gifSidebar.left
         anchors.bottom: parent.bottom
         anchors.margins: Appearance.padding.large
 
@@ -94,6 +106,7 @@ Item {
                     }
                 }
 
+                // Media tab keeps only textual/controls/without album cover? The persistent gif is separate
                 Pane {
                     sourceComponent: Media {
                         visibilities: root.visibilities
