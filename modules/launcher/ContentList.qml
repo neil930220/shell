@@ -20,13 +20,14 @@ Item {
     required property int rounding
 
     readonly property bool showWallpapers: search.text.startsWith(`${Config.launcher.actionPrefix}wallpaper `)
-    readonly property Item currentList: showWallpapers ? wallpaperList.item : appList.item
+    readonly property bool showThemes: search.text.startsWith(`${Config.launcher.actionPrefix}theme `)
+    readonly property Item currentList: showWallpapers ? null : appList.item
 
     anchors.horizontalCenter: parent.horizontalCenter
     anchors.bottom: parent.bottom
 
     clip: true
-    state: showWallpapers ? "wallpapers" : "apps"
+    state: showThemes ? "themes" : (showWallpapers ? "wallpapers" : "apps")
 
     states: [
         State {
@@ -47,9 +48,35 @@ Item {
             name: "wallpapers"
 
             PropertyChanges {
-                root.implicitWidth: Math.max(Config.launcher.sizes.itemWidth * 1.2, wallpaperList.implicitWidth)
-                root.implicitHeight: Config.launcher.sizes.wallpaperHeight
-                wallpaperList.active: true
+                root.implicitWidth: Math.max(1300, Config.launcher.sizes.itemWidth * 2.5)
+                // Reduce height to only what's currently visible; don't reserve space for hidden sections
+                root.implicitHeight: Math.min(
+                    root.maxHeight,
+                    wallpaperSwitcher.item ? wallpaperSwitcher.item.implicitHeight : 0
+                )
+                wallpaperSwitcher.active: true
+            }
+
+            AnchorChanges {
+                anchors.left: root.parent.left
+                anchors.right: root.parent.right
+            }
+        },
+        State {
+            name: "themes"
+
+            PropertyChanges {
+                root.implicitWidth: Math.max(1000, Config.launcher.sizes.itemWidth * 2)
+                root.implicitHeight: Math.min(
+                    root.maxHeight,
+                    themeSwitcher.item ? themeSwitcher.item.implicitHeight : 0
+                )
+                themeSwitcher.active: true
+            }
+
+            AnchorChanges {
+                anchors.left: root.parent.left
+                anchors.right: root.parent.right
             }
         }
     ]
@@ -88,27 +115,34 @@ Item {
     }
 
     Loader {
-        id: wallpaperList
+        id: wallpaperSwitcher
 
         active: false
 
-        anchors.top: parent.top
-        anchors.bottom: parent.bottom
-        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.fill: parent
 
-        sourceComponent: WallpaperList {
-            search: root.search
+        sourceComponent: WallpaperSwitcherContent {
             visibilities: root.visibilities
-            panels: root.panels
-            content: root.content
+        }
+    }
+
+    Loader {
+        id: themeSwitcher
+
+        active: false
+
+        anchors.fill: parent
+
+        sourceComponent: ThemeSwitcherContent {
+            visibilities: root.visibilities
         }
     }
 
     Row {
         id: empty
 
-        opacity: root.currentList?.count === 0 ? 1 : 0
-        scale: root.currentList?.count === 0 ? 1 : 0.5
+        opacity: (root.state === "apps" && root.currentList?.count === 0) ? 1 : 0
+        scale: (root.state === "apps" && root.currentList?.count === 0) ? 1 : 0.5
 
         spacing: Appearance.spacing.normal
         padding: Appearance.padding.large
@@ -117,7 +151,7 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
 
         MaterialIcon {
-            text: root.state === "wallpapers" ? "wallpaper_slideshow" : "manage_search"
+            text: "manage_search"
             color: Colours.palette.m3onSurfaceVariant
             font.pointSize: Appearance.font.size.extraLarge
 
@@ -128,14 +162,14 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
 
             StyledText {
-                text: root.state === "wallpapers" ? qsTr("No wallpapers found") : qsTr("No results")
+                text: qsTr("No results")
                 color: Colours.palette.m3onSurfaceVariant
                 font.pointSize: Appearance.font.size.larger
                 font.weight: 500
             }
 
             StyledText {
-                text: root.state === "wallpapers" && Wallpapers.list.length === 0 ? qsTr("Try putting some wallpapers in %1").arg(Paths.shortenHome(Paths.wallsdir)) : qsTr("Try searching for something else")
+                text: qsTr("Try searching for something else")
                 color: Colours.palette.m3onSurfaceVariant
                 font.pointSize: Appearance.font.size.normal
             }

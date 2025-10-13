@@ -69,6 +69,15 @@ Scope {
         onPressed: root.launcherInterrupted = true
     }
 
+    CustomShortcut {
+        name: "clipboard"
+        description: "Toggle clipboard"
+		onPressed: {
+			console.log("[Shortcuts] Clipboard toggle requested; current visible= " + Clipboard.visible);
+			Clipboard.toggleVisible();
+		}
+    }
+
     IpcHandler {
         target: "drawers"
 

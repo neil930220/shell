@@ -43,10 +43,21 @@ ColumnLayout {
             } else if (Config.bar.workspaces.capitalisation.toLowerCase() === "lower") {
                 displayName = displayName.toLowerCase();
             }
-            const label = Config.bar.workspaces.label || displayName;
-            const occupiedLabel = Config.bar.workspaces.occupiedLabel || label;
-            const activeLabel = Config.bar.workspaces.activeLabel || (root.isOccupied ? occupiedLabel : label);
-            return root.activeWsId === root.ws ? activeLabel : root.isOccupied ? occupiedLabel : label;
+            
+            // Use workspace-specific icon if available and workspace is active or occupied
+            const workspaceIcon = Icons.getWorkspaceIcon(root.ws);
+            const hasWorkspaceIcon = workspaceIcon !== (Config.bar.workspaces.label || "󰄌");
+            
+            if (hasWorkspaceIcon && (root.activeWsId === root.ws || root.isOccupied)) {
+                // If workspace has a specific icon and is active or occupied, use it
+                return workspaceIcon;
+            } else {
+                // Fall back to the original logic for inactive workspaces or workspaces without specific icons
+                const label = Config.bar.workspaces.label || displayName;
+                const occupiedLabel = Config.bar.workspaces.occupiedLabel || label;
+                const activeLabel = Config.bar.workspaces.activeLabel || (root.isOccupied ? occupiedLabel : label);
+                return root.activeWsId === root.ws ? activeLabel : root.isOccupied ? occupiedLabel : label;
+            }
         }
         color: Config.bar.workspaces.occupiedBg || root.isOccupied || root.activeWsId === root.ws ? Colours.palette.m3onSurface : Colours.layer(Colours.palette.m3outlineVariant, 2)
         verticalAlignment: Qt.AlignVCenter

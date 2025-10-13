@@ -16,14 +16,14 @@ Item {
     StyledRect {
         anchors.fill: parent
         color: Colours.palette.m3surface
-
+        
         layer.enabled: true
         layer.effect: MultiEffect {
             maskSource: mask
             maskEnabled: true
             maskInverted: true
             maskThresholdMin: 0.5
-            maskSpreadAtMin: 1
+            maskSpreadAtMin: 1      
         }
     }
 

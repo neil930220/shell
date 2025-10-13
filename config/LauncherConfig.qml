@@ -43,14 +43,22 @@ JsonObject {
             icon: "palette",
             description: "Change the current colour scheme",
             command: ["autocomplete", "scheme"],
-            enabled: true,
+            enabled: false,
             dangerous: false
         },
         {
             name: "Wallpaper",
             icon: "image",
-            description: "Change the current wallpaper",
+            description: "Change workspace wallpapers",
             command: ["autocomplete", "wallpaper"],
+            enabled: true,
+            dangerous: false
+        },
+        {
+            name: "Theme",
+            icon: "palette",
+            description: "Switch themes (palette, GIFs, per-workspace wallpapers)",
+            command: ["autocomplete", "theme"],
             enabled: true,
             dangerous: false
         },

@@ -43,6 +43,8 @@ Searcher {
             } else if (command[0] === "setMode" && command.length > 1) {
                 list.visibilities.launcher = false;
                 Colours.setMode(command[1]);
+            } else if (command[0] === "openThemeSwitcher") {
+                list.search.text = `${Config.launcher.actionPrefix}theme `;
             } else {
                 list.visibilities.launcher = false;
                 Quickshell.execDetached(command);

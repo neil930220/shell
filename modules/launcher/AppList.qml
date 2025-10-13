@@ -52,7 +52,7 @@ StyledListView {
         const text = search.text;
         const prefix = Config.launcher.actionPrefix;
         if (text.startsWith(prefix)) {
-            for (const action of ["calc", "scheme", "variant"])
+            for (const action of ["calc"]) // scheme and variant disabled
                 if (text.startsWith(`${prefix}${action} `))
                     return action;
 
@@ -63,8 +63,7 @@ StyledListView {
     }
 
     onStateChanged: {
-        if (state === "scheme" || state === "variant")
-            Schemes.reload();
+        // scheme and variant disabled
     }
 
     states: [
@@ -91,23 +90,8 @@ StyledListView {
                 model.values: [0]
                 root.delegate: calcItem
             }
-        },
-        State {
-            name: "scheme"
-
-            PropertyChanges {
-                model.values: Schemes.query(search.text)
-                root.delegate: schemeItem
-            }
-        },
-        State {
-            name: "variant"
-
-            PropertyChanges {
-                model.values: M3Variants.query(search.text)
-                root.delegate: variantItem
-            }
         }
+        // scheme and variant states removed to disable switching
     ]
 
     transitions: Transition {

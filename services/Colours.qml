@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 
 import qs.config
 import qs.utils
+import qs.services
 import Caelestia
 import Quickshell
 import Quickshell.Io
@@ -12,14 +13,16 @@ Singleton {
     id: root
 
     property bool showPreview
+    // Force M3Palette only; disable external scheme/flavour switching
     property string scheme
     property string flavour
     readonly property bool light: showPreview ? previewLight : currentLight
     property bool currentLight
     property bool previewLight
-    readonly property M3Palette palette: showPreview ? preview : current
+    readonly property M3Palette palette: showPreview ? preview : (Themes.active ? themed : current)
     readonly property M3TPalette tPalette: M3TPalette {}
     readonly property M3Palette current: M3Palette {}
+    readonly property M3Palette themed: M3Palette {}
     readonly property M3Palette preview: M3Palette {}
     readonly property Transparency transparency: Transparency {}
     readonly property alias wallLuminance: analyser.luminance
@@ -56,21 +59,13 @@ Singleton {
     }
 
     function load(data: string, isPreview: bool): void {
-        const colours = isPreview ? preview : current;
-        const scheme = JSON.parse(data);
-
+        // Ignore external scheme data entirely to keep built-in M3Palette
         if (!isPreview) {
-            root.scheme = scheme.name;
-            flavour = scheme.flavour;
-            currentLight = scheme.mode === "light";
+            root.scheme = "M3Palette";
+            flavour = "default";
+            currentLight = false;
         } else {
-            previewLight = scheme.mode === "light";
-        }
-
-        for (const [name, colour] of Object.entries(scheme.colours)) {
-            const propName = name.startsWith("term") ? name : `m3${name}`;
-            if (colours.hasOwnProperty(propName))
-                colours[propName] = `#${colour}`;
+            previewLight = false;
         }
     }
 
@@ -78,11 +73,97 @@ Singleton {
         Quickshell.execDetached(["caelestia", "scheme", "set", "--notify", "-m", mode]);
     }
 
-    FileView {
-        path: `${Paths.state}/scheme.json`
-        watchChanges: true
-        onFileChanged: reload()
-        onLoaded: root.load(text(), false)
+    // Apply theme palette overrides into `themed`
+    Connections {
+        target: Themes
+
+        function onApplied(name: string): void {
+            const keys = Themes.active && Themes.active.palette ? Object.keys(Themes.active.palette).length : 0;
+            console.log("Colours: onApplied theme", name, "palette keys:", keys);
+            if (Themes.active?.palette) {
+                const p = Themes.active.palette;
+                // copy known keys if present
+                themed.m3primary_paletteKeyColor = p.m3primary_paletteKeyColor ?? current.m3primary_paletteKeyColor;
+                themed.m3secondary_paletteKeyColor = p.m3secondary_paletteKeyColor ?? current.m3secondary_paletteKeyColor;
+                themed.m3tertiary_paletteKeyColor = p.m3tertiary_paletteKeyColor ?? current.m3tertiary_paletteKeyColor;
+                themed.m3neutral_paletteKeyColor = p.m3neutral_paletteKeyColor ?? current.m3neutral_paletteKeyColor;
+                themed.m3neutral_variant_paletteKeyColor = p.m3neutral_variant_paletteKeyColor ?? current.m3neutral_variant_paletteKeyColor;
+                themed.m3background = p.m3background ?? current.m3background;
+                themed.m3onBackground = p.m3onBackground ?? current.m3onBackground;
+                themed.m3surface = p.m3surface ?? current.m3surface;
+                themed.m3surfaceDim = p.m3surfaceDim ?? current.m3surfaceDim;
+                themed.m3surfaceBright = p.m3surfaceBright ?? current.m3surfaceBright;
+                themed.m3surfaceContainerLowest = p.m3surfaceContainerLowest ?? current.m3surfaceContainerLowest;
+                themed.m3surfaceContainerLow = p.m3surfaceContainerLow ?? current.m3surfaceContainerLow;
+                themed.m3surfaceContainer = p.m3surfaceContainer ?? current.m3surfaceContainer;
+                themed.m3surfaceContainerHigh = p.m3surfaceContainerHigh ?? current.m3surfaceContainerHigh;
+                themed.m3surfaceContainerHighest = p.m3surfaceContainerHighest ?? current.m3surfaceContainerHighest;
+                themed.m3onSurface = p.m3onSurface ?? current.m3onSurface;
+                themed.m3surfaceVariant = p.m3surfaceVariant ?? current.m3surfaceVariant;
+                themed.m3onSurfaceVariant = p.m3onSurfaceVariant ?? current.m3onSurfaceVariant;
+                themed.m3inverseSurface = p.m3inverseSurface ?? current.m3inverseSurface;
+                themed.m3inverseOnSurface = p.m3inverseOnSurface ?? current.m3inverseOnSurface;
+                themed.m3outline = p.m3outline ?? current.m3outline;
+                themed.m3outlineVariant = p.m3outlineVariant ?? current.m3outlineVariant;
+                themed.m3shadow = p.m3shadow ?? current.m3shadow;
+                themed.m3scrim = p.m3scrim ?? current.m3scrim;
+                themed.m3surfaceTint = p.m3surfaceTint ?? current.m3surfaceTint;
+                themed.m3primary = p.m3primary ?? current.m3primary;
+                themed.m3onPrimary = p.m3onPrimary ?? current.m3onPrimary;
+                themed.m3primaryContainer = p.m3primaryContainer ?? current.m3primaryContainer;
+                themed.m3onPrimaryContainer = p.m3onPrimaryContainer ?? current.m3onPrimaryContainer;
+                themed.m3inversePrimary = p.m3inversePrimary ?? current.m3inversePrimary;
+                themed.m3secondary = p.m3secondary ?? current.m3secondary;
+                themed.m3onSecondary = p.m3onSecondary ?? current.m3onSecondary;
+                themed.m3secondaryContainer = p.m3secondaryContainer ?? current.m3secondaryContainer;
+                themed.m3onSecondaryContainer = p.m3onSecondaryContainer ?? current.m3onSecondaryContainer;
+                themed.m3tertiary = p.m3tertiary ?? current.m3tertiary;
+                themed.m3onTertiary = p.m3onTertiary ?? current.m3onTertiary;
+                themed.m3tertiaryContainer = p.m3tertiaryContainer ?? current.m3tertiaryContainer;
+                themed.m3onTertiaryContainer = p.m3onTertiaryContainer ?? current.m3onTertiaryContainer;
+                themed.m3error = p.m3error ?? current.m3error;
+                themed.m3onError = p.m3onError ?? current.m3onError;
+                themed.m3errorContainer = p.m3errorContainer ?? current.m3errorContainer;
+                themed.m3onErrorContainer = p.m3onErrorContainer ?? current.m3onErrorContainer;
+                themed.m3success = p.m3success ?? current.m3success;
+                themed.m3onSuccess = p.m3onSuccess ?? current.m3onSuccess;
+                themed.m3successContainer = p.m3successContainer ?? current.m3successContainer;
+                themed.m3onSuccessContainer = p.m3onSuccessContainer ?? current.m3onSuccessContainer;
+                themed.m3primaryFixed = p.m3primaryFixed ?? current.m3primaryFixed;
+                themed.m3primaryFixedDim = p.m3primaryFixedDim ?? current.m3primaryFixedDim;
+                themed.m3onPrimaryFixed = p.m3onPrimaryFixed ?? current.m3onPrimaryFixed;
+                themed.m3onPrimaryFixedVariant = p.m3onPrimaryFixedVariant ?? current.m3onPrimaryFixedVariant;
+                themed.m3secondaryFixed = p.m3secondaryFixed ?? current.m3secondaryFixed;
+                themed.m3secondaryFixedDim = p.m3secondaryFixedDim ?? current.m3secondaryFixedDim;
+                themed.m3onSecondaryFixed = p.m3onSecondaryFixed ?? current.m3onSecondaryFixed;
+                themed.m3onSecondaryFixedVariant = p.m3onSecondaryFixedVariant ?? current.m3onSecondaryFixedVariant;
+                themed.m3tertiaryFixed = p.m3tertiaryFixed ?? current.m3tertiaryFixed;
+                themed.m3tertiaryFixedDim = p.m3tertiaryFixedDim ?? current.m3tertiaryFixedDim;
+                themed.m3onTertiaryFixed = p.m3onTertiaryFixed ?? current.m3onTertiaryFixed;
+                themed.m3onTertiaryFixedVariant = p.m3onTertiaryFixedVariant ?? current.m3onTertiaryFixedVariant;
+                themed.term0 = p.term0 ?? current.term0;
+                themed.term1 = p.term1 ?? current.term1;
+                themed.term2 = p.term2 ?? current.term2;
+                themed.term3 = p.term3 ?? current.term3;
+                themed.term4 = p.term4 ?? current.term4;
+                themed.term5 = p.term5 ?? current.term5;
+                themed.term6 = p.term6 ?? current.term6;
+                themed.term7 = p.term7 ?? current.term7;
+                themed.term8 = p.term8 ?? current.term8;
+                themed.term9 = p.term9 ?? current.term9;
+                themed.term10 = p.term10 ?? current.term10;
+                themed.term11 = p.term11 ?? current.term11;
+                themed.term12 = p.term12 ?? current.term12;
+                themed.term13 = p.term13 ?? current.term13;
+                themed.term14 = p.term14 ?? current.term14;
+                themed.term15 = p.term15 ?? current.term15;
+            }
+        }
+        function onDeactivated(): void {
+            // clear themed to current
+            console.log("Colours: onDeactivated – reverting to current palette");
+            themed = current;
+        }
     }
 
     ImageAnalyser {
@@ -166,38 +247,38 @@ Singleton {
         property color m3neutral_variant_paletteKeyColor: "#837377"
         property color m3background: "#191114"
         property color m3onBackground: "#efdfe2"
-        property color m3surface: "#191114"
+        property color m3surface: '#cc0e0d0d'   
         property color m3surfaceDim: "#191114"
         property color m3surfaceBright: "#403739"
         property color m3surfaceContainerLowest: "#130c0e"
         property color m3surfaceContainerLow: "#22191c"
-        property color m3surfaceContainer: "#261d20"
+        property color m3surfaceContainer: '#4a4b4e'    
         property color m3surfaceContainerHigh: "#31282a"
         property color m3surfaceContainerHighest: "#3c3235"
-        property color m3onSurface: "#efdfe2"
-        property color m3surfaceVariant: "#514347"
+        property color m3onSurface: "#EAEAEA"
+        property color m3surfaceVariant: '#020202'
         property color m3onSurfaceVariant: "#d5c2c6"
-        property color m3inverseSurface: "#efdfe2"
+        property color m3inverseSurface: "#BD3939"
         property color m3inverseOnSurface: "#372e30"
         property color m3outline: "#9e8c91"
         property color m3outlineVariant: "#514347"
         property color m3shadow: "#000000"
         property color m3scrim: "#000000"
         property color m3surfaceTint: "#ffb0ca"
-        property color m3primary: "#ffb0ca"
-        property color m3onPrimary: "#541d34"
-        property color m3primaryContainer: "#6f334a"
+        property color m3primary: "#BD3939"
+        property color m3onPrimary: "#EAEAEA"
+        property color m3primaryContainer: "#BD3939"
         property color m3onPrimaryContainer: "#ffd9e3"
         property color m3inversePrimary: "#8b4a62"
-        property color m3secondary: "#e2bdc7"
+        property color m3secondary: "#EAEAEA"
         property color m3onSecondary: "#422932"
-        property color m3secondaryContainer: "#5a3f48"
+        property color m3secondaryContainer: "#505B7C"
         property color m3onSecondaryContainer: "#ffd9e3"
-        property color m3tertiary: "#f0bc95"
+        property color m3tertiary: "#EAEAEA"
         property color m3onTertiary: "#48290c"
         property color m3tertiaryContainer: "#b58763"
         property color m3onTertiaryContainer: "#000000"
-        property color m3error: "#ffb4ab"
+        property color m3error: "#EAEAEA"
         property color m3onError: "#690005"
         property color m3errorContainer: "#93000a"
         property color m3onErrorContainer: "#ffdad6"
@@ -212,7 +293,7 @@ Singleton {
         property color m3secondaryFixed: "#ffd9e3"
         property color m3secondaryFixedDim: "#e2bdc7"
         property color m3onSecondaryFixed: "#2b151d"
-        property color m3onSecondaryFixedVariant: "#5a3f48"
+        property color m3onSecondaryFixedVariant: '#c0a1ab'
         property color m3tertiaryFixed: "#ffdcc3"
         property color m3tertiaryFixedDim: "#f0bc95"
         property color m3onTertiaryFixed: "#2f1500"

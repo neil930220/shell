@@ -52,7 +52,7 @@ Variants {
             screen: scope.modelData
             name: "drawers"
             WlrLayershell.exclusionMode: ExclusionMode.Ignore
-            WlrLayershell.keyboardFocus: visibilities.launcher || visibilities.session ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
+            WlrLayershell.keyboardFocus: visibilities.launcher || visibilities.session || Clipboard.visible ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
 
             mask: Region {
                 x: bar.implicitWidth + win.dragMaskPadding
@@ -88,7 +88,7 @@ Variants {
             HyprlandFocusGrab {
                 id: focusGrab
 
-                active: (visibilities.launcher && Config.launcher.enabled) || (visibilities.session && Config.session.enabled) || (visibilities.sidebar && Config.sidebar.enabled) || (!Config.dashboard.showOnHover && visibilities.dashboard && Config.dashboard.enabled) || (panels.popouts.currentName.startsWith("traymenu") && panels.popouts.current?.depth > 1)
+                active: (visibilities.launcher && Config.launcher.enabled) || (visibilities.session && Config.session.enabled) || (visibilities.sidebar && Config.sidebar.enabled) || (!Config.dashboard.showOnHover && visibilities.dashboard && Config.dashboard.enabled) || (panels.popouts.currentName.startsWith("traymenu") && panels.popouts.current?.depth > 1) || Clipboard.visible
                 windows: [win]
                 onCleared: {
                     visibilities.launcher = false;
@@ -97,14 +97,15 @@ Variants {
                     visibilities.dashboard = false;
                     panels.popouts.hasCurrent = false;
                     bar.closeTray();
+                    Clipboard.visible = false;
                 }
             }
 
             StyledRect {
                 anchors.fill: parent
                 opacity: visibilities.session && Config.session.enabled ? 0.5 : 0
-                color: Colours.palette.m3scrim
-
+                color: Colours.palette.m3scrim 
+                          
                 Behavior on opacity {
                     Anim {}
                 }

@@ -96,11 +96,62 @@ Row {
     StyledRect {
         id: expandBtn
 
-        property real rad: root.expanded ? implicitHeight / 2 : Appearance.rounding.small / 2
+        property real rad: {
+            if (root.expanded && root.menuOnTop) {
+                return implicitHeight / 2;
+            } else if (root.expanded && !root.menuOnTop) {
+                return implicitHeight / 2;
+            } else {
+                return Appearance.rounding.small / 2
+            }
+        }
 
-        radius: implicitHeight / 2
-        topLeftRadius: rad
-        bottomLeftRadius: rad
+        property real topRightRad: {
+            if (root.expanded && root.menuOnTop) {
+                return Appearance.rounding.small / 2;
+            } else if (root.expanded && !root.menuOnTop) {
+                return implicitHeight / 2;
+            } else {
+                return implicitHeight / 2
+            }
+        }
+
+        property real bottomRightRad: {
+            if (root.expanded && root.menuOnTop) {
+                return implicitHeight / 2;
+            } else if (root.expanded && !root.menuOnTop) {
+                return Appearance.rounding.small / 2;
+            } else {
+                return implicitHeight / 2
+            }
+        }
+
+        property real topLeftRad: {
+            if (root.expanded && root.menuOnTop) {
+                return Appearance.rounding.small / 2;
+            } else if (root.expanded && !root.menuOnTop) {
+                return implicitHeight / 2;
+            } else {
+                return Appearance.rounding.small / 2
+            }
+        }
+
+        property real bottomLeftRad: {
+            if (root.expanded && root.menuOnTop) {
+                return implicitHeight / 2;
+            } else if (root.expanded && !root.menuOnTop) {
+                return Appearance.rounding.small / 2;
+            } else {
+                return Appearance.rounding.small / 2
+            }
+        }
+
+        radius: Appearance.rounding.small
+        topLeftRadius: topLeftRad
+        bottomLeftRadius: bottomLeftRad
+        bottomRightRadius: bottomRightRad
+        topRightRadius: topRightRad
+
         color: root.disabled ? root.disabledColour : root.colour
 
         implicitWidth: implicitHeight
@@ -139,6 +190,22 @@ Row {
         }
 
         Behavior on rad {
+            Anim {}
+        }
+
+        Behavior on topLeftRad {
+            Anim {}
+        }
+
+        Behavior on bottomLeftRad {
+            Anim {}
+        }
+
+        Behavior on topRightRad {
+            Anim {}
+        }
+
+        Behavior on bottomRightRad {
             Anim {}
         }
 

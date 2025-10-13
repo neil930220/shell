@@ -153,6 +153,12 @@ ColumnLayout {
                 }
             }
             DelegateChoice {
+                roleValue: "updates"
+                delegate: WrappedLoader {
+                    sourceComponent: Updates {}
+                }
+            }
+            DelegateChoice {
                 roleValue: "statusIcons"
                 delegate: WrappedLoader {
                     sourceComponent: StatusIcons {}

@@ -98,6 +98,15 @@ Singleton {
             Office: "content_paste"
         })
 
+    readonly property var workspaceIcons: ({
+            2: "",
+            4: "",
+            5: "",
+            6: "󰙯",
+            7: "󰓓",
+            10: ""
+        })
+
     function getAppIcon(name: string, fallback: string): string {
         const icon = DesktopEntries.heuristicLookup(name)?.icon;
         if (fallback !== "undefined")
@@ -217,5 +226,11 @@ Singleton {
             icon = Qt.resolvedUrl(`${path}/${name.slice(name.lastIndexOf("/") + 1)}`);
         }
         return icon;
+    }
+
+    function getWorkspaceIcon(workspaceId: int): string {
+        if (workspaceIcons.hasOwnProperty(workspaceId))
+            return workspaceIcons[workspaceId];
+        return Config.bar.workspaces.label || "󰄌";
     }
 }
