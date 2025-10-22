@@ -23,6 +23,15 @@ Elevation {
     implicitHeight: root.expanded ? column.implicitHeight : 0
     opacity: root.expanded ? 1 : 0
 
+    // Block mouse events when expanded to prevent hover state issues on underlying components
+    MouseArea {
+        anchors.fill: parent
+        enabled: root.expanded
+        hoverEnabled: true
+        preventStealing: true
+        propagateComposedEvents: false
+    }
+
     StyledClippingRect {
         anchors.fill: parent
         radius: parent.radius

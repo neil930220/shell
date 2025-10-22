@@ -216,17 +216,82 @@ Row {
         Menu {
             id: menu
 
-            // When possible, render in window overlay to avoid clipping by parents
+            // Track whether we're currently using overlay parenting
+            property bool useOverlay: false
+
+            // When possible, render in window overlay to avoid clipping by parents;
+            // only enable overlay if the menu would be clipped by a clipping ancestor
             Component.onCompleted: {
-                if (root.overlayRoot) {
-                    // reparent to overlay on first use if expanded
-                    if (menu.expanded) {
-                        menu.anchors.top = undefined;
-                        menu.anchors.bottom = undefined;
-                        menu.anchors.right = undefined;
-                        menu.parent = root.overlayRoot;
-                        menu.updateOverlayPos();
+                if (expanded) {
+                    menu.evaluateOverlayNeed();
+                    menu.applyParenting();
+                    if (menu.useOverlay) menu.updateOverlayPos();
+                }
+            }
+
+            function findClippingAncestor() {
+                // Walk up the tree from the expand button until the window content
+                var p = expandBtn.parent;
+                while (p && p !== root.overlayRoot) {
+                    if (typeof p.clip === "boolean" && p.clip) {
+                        return p;
                     }
+                    p = p.parent;
+                }
+                return null;
+            }
+
+            function shouldUseOverlayNow() {
+                if (!root.overlayRoot)
+                    return false;
+
+                const clipper = findClippingAncestor();
+                if (!clipper)
+                    return false;
+
+                const spacing = Appearance.spacing.small;
+                const w = menu.implicitWidth;
+                const h = menu.implicitHeight;
+                if (w <= 0 || h <= 0)
+                    return false;
+
+                const btnTopLeft = expandBtn.mapToItem(clipper, 0, 0);
+                const btnBottomLeft = expandBtn.mapToItem(clipper, 0, expandBtn.height);
+                const btnTopRight = expandBtn.mapToItem(clipper, expandBtn.width, 0);
+
+                const desiredX = btnTopRight.x - w;
+                const desiredY = root.menuOnTop ? (btnTopLeft.y - h - spacing)
+                                                : (btnBottomLeft.y + spacing);
+
+                // Check if desired rect would be outside clipper's bounds
+                if (desiredX < 0 || desiredY < 0)
+                    return true;
+                if (desiredX + w > clipper.width || desiredY + h > clipper.height)
+                    return true;
+                return false;
+            }
+
+            function evaluateOverlayNeed() {
+                menu.useOverlay = shouldUseOverlayNow();
+            }
+
+            function applyParenting() {
+                if (!root.overlayRoot)
+                    return;
+
+                if (menu.useOverlay) {
+                    // Detach anchors before reparenting to overlay
+                    menu.anchors.top = undefined;
+                    menu.anchors.bottom = undefined;
+                    menu.anchors.right = undefined;
+                    menu.parent = root.overlayRoot;
+                } else if (menu.parent !== expandBtn) {
+                    // Restore parenting to expand button and default anchors
+                    menu.parent = expandBtn;
+                    menu.anchors.top = parent.bottom;
+                    menu.anchors.right = parent.right;
+                    menu.anchors.topMargin = Appearance.spacing.small;
+                    menu.anchors.bottomMargin = Appearance.spacing.small;
                 }
             }
 
@@ -256,25 +321,39 @@ Row {
             }
 
             onExpandedChanged: {
-                if (root.overlayRoot) {
-                    if (expanded) {
-                        menu.anchors.top = undefined;
-                        menu.anchors.bottom = undefined;
-                        menu.anchors.right = undefined;
-                        menu.parent = root.overlayRoot;
-                        menu.updateOverlayPos();
-                    } else if (menu.parent !== expandBtn) {
+                if (!expanded) {
+                    if (menu.parent !== expandBtn) {
+                        menu.useOverlay = false;
                         menu.parent = expandBtn;
                     }
+                    return;
                 }
+
+                // Expanded
+                menu.evaluateOverlayNeed();
+                menu.applyParenting();
+                if (menu.useOverlay)
+                    menu.updateOverlayPos();
             }
 
-            onImplicitWidthChanged: if (expanded) updateOverlayPos()
-            onImplicitHeightChanged: if (expanded) updateOverlayPos()
+            onImplicitWidthChanged: {
+                if (!expanded) return;
+                const prev = menu.useOverlay;
+                menu.evaluateOverlayNeed();
+                if (menu.useOverlay !== prev) menu.applyParenting();
+                if (menu.useOverlay) menu.updateOverlayPos();
+            }
+            onImplicitHeightChanged: {
+                if (!expanded) return;
+                const prev = menu.useOverlay;
+                menu.evaluateOverlayNeed();
+                if (menu.useOverlay !== prev) menu.applyParenting();
+                if (menu.useOverlay) menu.updateOverlayPos();
+            }
 
             Connections {
                 target: root.overlayRoot
-                enabled: target && menu.expanded
+                enabled: target && menu.expanded && menu.useOverlay
                 function onWidthChanged() { menu.updateOverlayPos(); }
                 function onHeightChanged() { menu.updateOverlayPos(); }
             }
