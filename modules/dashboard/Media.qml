@@ -318,7 +318,38 @@ Item {
                     root.visibilities.dashboard = false;
                 }
             }
+            
+         SplitButton {
+                id: playerSelector
 
+                disabled: !Players.list.length
+                active: menuItems.find(m => m.modelData === Players.active) ?? menuItems[0]
+                menu.onItemSelected: item => Players.manualActive = item.modelData
+
+                menuItems: playerList.instances
+                fallbackIcon: "music_off"
+                fallbackText: qsTr("No players")
+
+                label.Layout.maximumWidth: slider.implicitWidth * 0.28
+                label.elide: Text.ElideRight
+
+                stateLayer.disabled: true
+                menuOnTop: true
+
+                Variants {
+                    id: playerList
+
+                    model: Players.list
+
+                    MenuItem {
+                        required property MprisPlayer modelData
+
+                        icon: modelData === Players.active ? "check" : ""
+                        text: Players.getIdentity(modelData)
+                        activeIcon: "animated_images"
+                    }
+                }
+            }
 
             PlayerControl {
                 type: IconButton.Text
@@ -331,7 +362,6 @@ Item {
             }
         }
     }
-
 
     component PlayerControl: IconButton {
         Layout.preferredWidth: implicitWidth + (stateLayer.pressed ? Appearance.padding.large : internalChecked ? Appearance.padding.smaller : 0)

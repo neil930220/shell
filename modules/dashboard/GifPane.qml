@@ -18,7 +18,6 @@ StyledRect {
     required property PersistentProperties visibilities
 
     radius: Appearance.rounding.small
-    color: Colours.tPalette.m3surfaceContainer
     clip: true
 
     // Width large enough to fit the media-tab sized circle (cover + visualiser)
@@ -94,7 +93,7 @@ StyledRect {
             Layout.alignment: Qt.AlignHCenter
             Layout.fillWidth: true
             Layout.preferredHeight: titleRow.implicitHeight + Appearance.padding.small * 2
-            color: "white"
+            color: "transparent"
             radius: Appearance.rounding.small
 
             RowLayout {

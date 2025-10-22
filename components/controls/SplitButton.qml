@@ -3,6 +3,7 @@ import qs.services
 import qs.config
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Window
 
 Row {
     id: root
@@ -32,6 +33,9 @@ Row {
     property color textColour: type == SplitButton.Filled ? Colours.palette.m3onPrimary : Colours.palette.m3onSecondaryContainer
     property color disabledColour: Qt.alpha(Colours.palette.m3onSurface, 0.1)
     property color disabledTextColour: Qt.alpha(Colours.palette.m3onSurface, 0.38)
+
+    // Use window content as overlay root for menus to avoid clipping
+    readonly property Item overlayRoot: Window.window?.contentItem ?? null
 
     spacing: Math.floor(Appearance.spacing.small / 2)
 
@@ -211,6 +215,78 @@ Row {
 
         Menu {
             id: menu
+
+            // When possible, render in window overlay to avoid clipping by parents
+            Component.onCompleted: {
+                if (root.overlayRoot) {
+                    // reparent to overlay on first use if expanded
+                    if (menu.expanded) {
+                        menu.anchors.top = undefined;
+                        menu.anchors.bottom = undefined;
+                        menu.anchors.right = undefined;
+                        menu.parent = root.overlayRoot;
+                        menu.updateOverlayPos();
+                    }
+                }
+            }
+
+            function updateOverlayPos() {
+                if (!root.overlayRoot)
+                    return;
+
+                const overlay = root.overlayRoot;
+                const spacing = Appearance.spacing.small;
+
+                const btnTopLeft = expandBtn.mapToItem(overlay, 0, 0);
+                const btnBottomLeft = expandBtn.mapToItem(overlay, 0, expandBtn.height);
+                const btnTopRight = expandBtn.mapToItem(overlay, expandBtn.width, 0);
+
+                const desiredX = btnTopRight.x - menu.implicitWidth;
+                const desiredY = root.menuOnTop ? (btnTopLeft.y - menu.implicitHeight - spacing)
+                                                : (btnBottomLeft.y + spacing);
+
+                const minX = 0;
+                const maxX = Math.max(0, overlay.width - menu.implicitWidth);
+                const minY = 0;
+                const maxY = Math.max(0, overlay.height - menu.implicitHeight);
+
+                menu.x = Math.min(Math.max(desiredX, minX), maxX);
+                menu.y = Math.min(Math.max(desiredY, minY), maxY);
+                menu.z = 9999;
+            }
+
+            onExpandedChanged: {
+                if (root.overlayRoot) {
+                    if (expanded) {
+                        menu.anchors.top = undefined;
+                        menu.anchors.bottom = undefined;
+                        menu.anchors.right = undefined;
+                        menu.parent = root.overlayRoot;
+                        menu.updateOverlayPos();
+                    } else if (menu.parent !== expandBtn) {
+                        menu.parent = expandBtn;
+                    }
+                }
+            }
+
+            onImplicitWidthChanged: if (expanded) updateOverlayPos()
+            onImplicitHeightChanged: if (expanded) updateOverlayPos()
+
+            Connections {
+                target: root.overlayRoot
+                enabled: target && menu.expanded
+                function onWidthChanged() { menu.updateOverlayPos(); }
+                function onHeightChanged() { menu.updateOverlayPos(); }
+            }
+
+            Connections {
+                target: expandBtn
+                enabled: menu.expanded
+                function onXChanged() { menu.updateOverlayPos(); }
+                function onYChanged() { menu.updateOverlayPos(); }
+                function onWidthChanged() { menu.updateOverlayPos(); }
+                function onHeightChanged() { menu.updateOverlayPos(); }
+            }
 
             states: State {
                 when: root.menuOnTop
