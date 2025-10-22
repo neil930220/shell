@@ -306,6 +306,7 @@ default, you must create it manually.
         },
         "enabled": true,
         "visualiser": {
+            "blur": false,
             "enabled": false,
             "autoHide": true,
             "rounding": 1,
@@ -356,6 +357,11 @@ default, you must create it manually.
             }
         ],
         "persistent": true,
+        "popouts": {
+            "activeWindow": true,
+            "statusIcons": true,
+            "tray": true
+        },
         "scrollActions": {
             "brightness": true,
             "workspaces": true,
@@ -589,7 +595,19 @@ default, you must create it manually.
             "dndChanged": true,
             "gameModeChanged": true,
             "kbLayoutChanged": true,
-            "numLockChanged": true
+            "numLockChanged": true,
+            "vpnChanged": true,
+            "nowPlaying": false
+        },
+        "vpn": {
+            "enabled": false,
+            "provider": [
+                {
+                    "name": "wireguard",
+                    "interface": "your-connection-name",
+                    "displayName": "Wireguard (Your VPN)"
+                }
+            ]
         }
     }
 }
