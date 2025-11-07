@@ -62,9 +62,7 @@ Singleton {
 
     // Functions
     function toggleVisible() {
-        console.log("[Clipboard] toggleVisible called; before= " + visible);
         visible = !visible;
-        console.log("[Clipboard] toggleVisible finished; after= " + visible);
     }
 
     function nextPage() {
@@ -136,7 +134,6 @@ Singleton {
     }
 
     function refreshClipboard() {
-        console.log("[Clipboard] refreshClipboard invoked");
         smartRefreshProc.running = true;
     }
 
@@ -159,7 +156,6 @@ Singleton {
         interval: 2000
         repeat: true
         onTriggered: {
-            console.log("[Clipboard] autoRefreshTimer tick; triggering smartRefresh");
             smartRefreshProc.running = true;
         }
     }
@@ -171,7 +167,6 @@ Singleton {
         command: ["copyq", "count"]
         stdout: StdioCollector {
             onStreamFinished: {
-                console.log("[Clipboard] smartRefreshProc finished; stdout=\n" + text)
                 const currentCount = parseInt(text.trim());
                 
                 if (lastKnownCount < 0) {
@@ -192,11 +187,9 @@ Singleton {
                     fetchRangeProc.startIndex = 0;
                     fetchRangeProc.endIndex = delta;
                     fetchRangeProc.isIncremental = true;
-                    console.log("[Clipboard] Detected new items; delta=" + delta + ", starting incremental fetch 0.." + delta);
                     fetchRangeProc.running = true;
                 } else {
                     // Items removed - full refresh
-                    console.log("[Clipboard] Detected removal; starting full refresh");
                     fullRefreshProc.running = true;
                 }
             }
@@ -210,19 +203,16 @@ Singleton {
         command: ["copyq", "count"]
         stdout: StdioCollector {
             onStreamFinished: {
-                console.log("[Clipboard] fullRefresh count stdout=\n" + text)
                 const count = parseInt(text.trim());
                 if (count === 0) {
-                    console.log("[Clipboard] No items; clearing list");
                     clipboardItems = [];
                     lastKnownCount = 0;
                     return;
                 }
-                
+
                 fetchRangeProc.startIndex = 0;
                 fetchRangeProc.endIndex = count;
                 fetchRangeProc.isIncremental = false;
-                console.log("[Clipboard] Starting full fetch 0.." + count);
                 fetchRangeProc.running = true;
             }
         }
@@ -241,7 +231,6 @@ Singleton {
         
         onRunningChanged: {
             if (running) {
-                console.log("[Clipboard] fetchRange running: start=" + startIndex + ", end=" + endIndex + ", maxConcurrency=" + maxConcurrency);
                 fetchedItems = [];
                 currentBatch = 0;
                 fetchNextBatch();
@@ -254,13 +243,11 @@ Singleton {
             
             if (batchStart >= endIndex) {
                 // All batches done
-                console.log("[Clipboard] fetchRange complete; finalizing");
                 finalizeFetch();
                 return;
             }
             
             // Fetch items in this batch
-            console.log("[Clipboard] Fetching batch #" + currentBatch + ": " + batchStart + ".." + (batchEnd-1));
             for (let i = batchStart; i < batchEnd; i++) {
                 fetchSingleItem(i);
             }
@@ -281,8 +268,7 @@ Singleton {
             ) - startIndex - currentBatch * maxConcurrency;
             
             const receivedInBatch = fetchedItems.length - currentBatch * maxConcurrency;
-            
-            console.log("[Clipboard] Item fetched idx=" + item.index + ", type=" + item.type + "; batch received=" + receivedInBatch + "/" + expectedInBatch);
+
             if (receivedInBatch >= expectedInBatch) {
                 currentBatch++;
                 fetchNextBatch();
@@ -307,13 +293,11 @@ Singleton {
                 merged.sort((a, b) => a.index - b.index);
                 clipboardItems = merged;
                 lastKnownCount = lastKnownCount + delta;
-                console.log("[Clipboard] Incremental fetch merged; delta=" + delta + ", new count=" + clipboardItems.length);
             } else {
                 // Full replace
                 fetchedItems.sort((a, b) => a.index - b.index);
                 clipboardItems = fetchedItems;
                 lastKnownCount = fetchedItems.length;
-                console.log("[Clipboard] Full fetch complete; count=" + clipboardItems.length);
             }
             
             if (currentPage > totalPages - 1) {
@@ -333,7 +317,6 @@ Singleton {
             property int itemIndex: 0
             
             Component.onCompleted: {
-                console.log("[Clipboard] itemFetch start index=" + itemFetch.itemIndex);
                 formatCheckProc.running = true;
             }
             
@@ -346,19 +329,15 @@ Singleton {
                         
                         if (hasImage) {
                             // Fetch as image
-                            console.log("[Clipboard] idx=" + itemFetch.itemIndex + " has image; using imageFetchProc");
                             itemFetch.imageFetchProc.running = true;
                         } else if (formats.includes("text/html")) {
                             // Fetch as HTML
-                            console.log("[Clipboard] idx=" + itemFetch.itemIndex + " has html; using htmlFetchProc");
                             itemFetch.htmlFetchProc.running = true;
                         } else if (formats.some(f => f.includes("text/plain"))) {
                             // Fetch as text
-                            console.log("[Clipboard] idx=" + itemFetch.itemIndex + " has text/plain; using textFetchProc");
                             itemFetch.textFetchProc.running = true;
                         } else {
                             // Non-text item
-                            console.log("[Clipboard] idx=" + itemFetch.itemIndex + " non-text; creating placeholder");
                             itemFetch.createNonTextItem(formats);
                         }
                     }
@@ -379,7 +358,6 @@ Singleton {
                         item.type = decoded.includes("\n") ? "multiline" : "text";
                         
                         fetchRangeProc.onItemFetched(item);
-                        console.log("[Clipboard] text item prepared idx=" + item.index + ", previewLen=" + item.preview.length);
                         itemFetch.destroy();
                     }
                 }
@@ -401,7 +379,6 @@ Singleton {
                         item.type = "html";
                         
                         fetchRangeProc.onItemFetched(item);
-                        console.log("[Clipboard] html item prepared idx=" + item.index + ", previewLen=" + item.preview.length);
                         itemFetch.destroy();
                     }
                 }
@@ -426,7 +403,6 @@ Singleton {
                         item.imagePath = path || "";
                         
                         fetchRangeProc.onItemFetched(item);
-                        console.log("[Clipboard] image item prepared idx=" + item.index + ", pathPresent=" + (item.imagePath !== ""));
                         itemFetch.destroy();
                     }
                 }
@@ -440,7 +416,6 @@ Singleton {
                 item.type = "non-text";
                 
                 fetchRangeProc.onItemFetched(item);
-                console.log("[Clipboard] non-text item prepared idx=" + item.index);
                 itemFetch.destroy();
             }
         }
