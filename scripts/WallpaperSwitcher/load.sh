@@ -35,8 +35,11 @@ echo "Config files created!"
 
 #################################################
 
-# swww daemon starts automatically when first used
-# No need to initialize manually
+# Ensure swww daemon is running (it does NOT auto-start on first use)
+if ! swww query >/dev/null 2>&1; then
+    swww-daemon --format xrgb >/dev/null 2>&1 &
+    disown || true
+fi
 
 #################################################
 

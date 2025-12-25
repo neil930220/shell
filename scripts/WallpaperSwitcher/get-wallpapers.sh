@@ -4,13 +4,27 @@
 default_wallpapers="$HOME/.config/wallpapers/defaults"
 custom_wallpapers="$HOME/.config/wallpapers/custom"
 all_wallpapers="$HOME/.config/wallpapers/all"
+switcher_conf_dir="$HOME/.config/quickshell/caelestia/scripts/WallpaperSwitcher/config"
 hyprDir="$HOME/.config/hypr"
+
+to_json_array() {
+    # Reads newline-delimited strings from stdin and prints a JSON array.
+    if command -v jq >/dev/null 2>&1; then
+        jq -R . | jq -s .
+    else
+        python3 - <<'PY'
+import json, sys
+items = [line.rstrip("\n") for line in sys.stdin]
+print(json.dumps(items))
+PY
+    fi
+}
 
 # Parse arguments
 case "$1" in
     --defaults)
         if [ -d "$default_wallpapers" ]; then
-            find "$default_wallpapers" -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.webp" \) | jq -R . | jq -s .
+            find "$default_wallpapers" -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.webp" \) | to_json_array
         else
             echo "[]"
         fi
@@ -24,9 +38,9 @@ case "$1" in
 
         if [ -d "$custom_wallpapers" ]; then
             if [ -n "$folder" ] && [ -d "$custom_wallpapers/$folder" ]; then
-                find "$custom_wallpapers/$folder" -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.webp" \) | jq -R . | jq -s .
+                find "$custom_wallpapers/$folder" -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.webp" \) | to_json_array
             else
-                find "$custom_wallpapers" -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.webp" \) | jq -R . | jq -s .
+                find "$custom_wallpapers" -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.webp" \) | to_json_array
             fi
         else
             echo "[]"
@@ -56,7 +70,7 @@ case "$1" in
                 done < <(find "$custom_wallpapers" -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.webp" \) -print0)
             fi
         fi
-        printf '%s\n' "${wallpapers[@]}" | jq -R . | jq -s .
+        printf '%s\n' "${wallpapers[@]}" | to_json_array
         ;;
     --current)
         # Get current wallpapers for each workspace on specified monitor
@@ -66,11 +80,20 @@ case "$1" in
         fi
         
         monitor="$2"
-        monitor_conf="$hyprDir/hyprpaper/config/$monitor/defaults.conf"
+        # Prefer WallpaperSwitcher config (this repo uses swww + scripts/WallpaperSwitcher/config/*)
+        monitor_conf="$switcher_conf_dir/$monitor/defaults.conf"
         
-        # If monitor config doesn't exist, use global defaults
+        # Fallback to global defaults if monitor-specific config doesn't exist
+        if [ ! -f "$monitor_conf" ]; then
+            monitor_conf="$switcher_conf_dir/defaults.conf"
+        fi
+
+        # Legacy fallback: older configs used hyprpaper paths
+        if [ ! -f "$monitor_conf" ]; then
+            monitor_conf="$hyprDir/hyprpaper/config/$monitor/defaults.conf"
         if [ ! -f "$monitor_conf" ]; then
             monitor_conf="$hyprDir/hyprpaper/config/defaults.conf"
+            fi
         fi
         
         if [ ! -f "$monitor_conf" ]; then
@@ -87,7 +110,7 @@ case "$1" in
             wallpapers+=("$wallpaper")
         done
         
-        printf '%s\n' "${wallpapers[@]}" | jq -R . | jq -s .
+        printf '%s\n' "${wallpapers[@]}" | to_json_array
         ;;
     *)
         echo "Usage: $0 {--defaults|--custom [--folder <name>]|--all [--folder <name>]|--current <monitor>}"

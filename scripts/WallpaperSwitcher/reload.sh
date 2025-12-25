@@ -5,7 +5,7 @@ configDir=$HOME/.config/quickshell/caelestia  # hypr directory
 pkill -f "auto.sh"
 
 # Restart swww daemon
-swww kill
+swww kill >/dev/null 2>&1 || true
 sleep 1
 
 # Load wallpaper
