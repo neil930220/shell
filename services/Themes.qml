@@ -424,6 +424,11 @@ done`;
 
                     console.log("Themes: loaded theme.json", root.activeName, "palette:", !!obj.palette, "wallpapers:", Object.keys(obj.wallpapers || {}).length);
 
+                    // Reset WallpaperSwitcher per-workspace config so old theme wallpapers don't linger.
+                    // This ensures w-1..w-10 are refreshed when switching themes, even if the theme
+                    // doesn't explicitly define all 10 wallpapers.
+                    Quickshell.execDetached(["bash", `${WallpaperSwitcher.scriptsDir}/reset-theme-config.sh`, root.activeName]);
+
                     // Apply palette into Colours.current fields
                     if (obj.palette) {
                         for (const key in obj.palette) {
