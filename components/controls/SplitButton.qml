@@ -40,7 +40,7 @@ Row {
     spacing: Math.floor(Appearance.spacing.small / 2)
 
     StyledRect {
-        radius: implicitHeight / 2
+        radius: implicitHeight / 2 * Math.min(1, Appearance.rounding.scale)
         topRightRadius: Appearance.rounding.small / 2
         bottomRightRadius: Appearance.rounding.small / 2
         color: root.disabled ? root.disabledColour : root.colour
@@ -100,62 +100,23 @@ Row {
     StyledRect {
         id: expandBtn
 
-        property real rad: {
-            if (root.expanded && root.menuOnTop) {
-                return implicitHeight / 2;
-            } else if (root.expanded && !root.menuOnTop) {
-                return implicitHeight / 2;
-            } else {
-                return Appearance.rounding.small / 2
-            }
-        }
+        // Keep outer corners pill-shaped, and keep the inner seam slightly rounded
+        // to match the left half. When the menu opens, flatten the edge touching it.
+        readonly property real fullRad: implicitHeight / 2 * Math.min(1, Appearance.rounding.scale)
+        readonly property real seamRad: Appearance.rounding.small / 2
 
-        property real topRightRad: {
-            if (root.expanded && root.menuOnTop) {
-                return Appearance.rounding.small / 2;
-            } else if (root.expanded && !root.menuOnTop) {
-                return implicitHeight / 2;
-            } else {
-                return implicitHeight / 2
-            }
-        }
+        // Used by existing Behaviors below
+        property real rad: fullRad
+        property real topLeftRad: seamRad
+        property real bottomLeftRad: seamRad
+        property real topRightRad: (root.expanded && root.menuOnTop) ? seamRad : fullRad
+        property real bottomRightRad: (root.expanded && !root.menuOnTop) ? seamRad : fullRad
 
-        property real bottomRightRad: {
-            if (root.expanded && root.menuOnTop) {
-                return implicitHeight / 2;
-            } else if (root.expanded && !root.menuOnTop) {
-                return Appearance.rounding.small / 2;
-            } else {
-                return implicitHeight / 2
-            }
-        }
-
-        property real topLeftRad: {
-            if (root.expanded && root.menuOnTop) {
-                return Appearance.rounding.small / 2;
-            } else if (root.expanded && !root.menuOnTop) {
-                return implicitHeight / 2;
-            } else {
-                return Appearance.rounding.small / 2
-            }
-        }
-
-        property real bottomLeftRad: {
-            if (root.expanded && root.menuOnTop) {
-                return implicitHeight / 2;
-            } else if (root.expanded && !root.menuOnTop) {
-                return Appearance.rounding.small / 2;
-            } else {
-                return Appearance.rounding.small / 2
-            }
-        }
-
-        radius: Appearance.rounding.small
+        radius: fullRad
         topLeftRadius: topLeftRad
         bottomLeftRadius: bottomLeftRad
-        bottomRightRadius: bottomRightRad
         topRightRadius: topRightRad
-
+        bottomRightRadius: bottomRightRad
         color: root.disabled ? root.disabledColour : root.colour
 
         implicitWidth: implicitHeight
