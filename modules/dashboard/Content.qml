@@ -54,7 +54,7 @@ Item {
         return allTabs.filter(tab => tab.enabled);
     }
 
-    readonly property real nonAnimWidth: view.implicitWidth + viewWrapper.anchors.margins * 2 + gifSidebar.implicitWidth + gifSidebar.anchors.margins * 2
+    readonly property real nonAnimWidth: view.implicitWidth + viewWrapper.anchors.margins * 2 + gifSidebar.implicitWidth + gifSidebar.anchors.margins
     readonly property real nonAnimHeight: tabs.implicitHeight + tabs.anchors.topMargin + Math.max(view.implicitHeight + viewWrapper.anchors.margins * 2, gifSidebar.implicitHeight + gifSidebar.anchors.margins * 2)
 
     implicitWidth: nonAnimWidth

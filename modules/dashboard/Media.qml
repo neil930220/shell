@@ -18,7 +18,7 @@ Item {
     required property DrawerVisibilities visibilities
     readonly property bool needsKeyboard: lyricMenuOpen
 
-    readonly property real nonAnimHeight: Math.max(cover.implicitHeight + Config.dashboard.sizes.mediaVisualiserSize * 2, lyricMenuOpen ? lyricMenu.implicitHeight : details.implicitHeight, bongocat.implicitHeight) + Appearance.padding.large * 2
+    readonly property real nonAnimHeight: Math.max(cover.implicitHeight + Config.dashboard.sizes.mediaVisualiserSize * 2, lyricMenuOpen ? lyricMenu.implicitHeight : details.implicitHeight) + Appearance.padding.large * 2
     readonly property real detailsHeightWithoutLyrics: details.implicitHeight - lyricsViewInDetails.implicitHeight
 
     property bool lyricMenuOpen: false
@@ -52,7 +52,7 @@ Item {
         }
     }
 
-    implicitWidth: cover.implicitWidth + Config.dashboard.sizes.mediaVisualiserSize * 2 + details.implicitWidth + details.anchors.leftMargin + bongocat.implicitWidth + bongocat.anchors.leftMargin * 2 + Appearance.padding.large * 2
+    implicitWidth: cover.implicitWidth + Config.dashboard.sizes.mediaVisualiserSize * 2 + details.implicitWidth + details.anchors.leftMargin + Appearance.padding.large * 2
     implicitHeight: nonAnimHeight
 
     Behavior on implicitHeight {
@@ -95,10 +95,6 @@ Item {
 
     ServiceRef {
         service: Audio.cava
-    }
-
-    ServiceRef {
-        service: Audio.beatTracker
     }
 
     Shape {
@@ -386,26 +382,6 @@ Item {
             NumberAnimation {
                 duration: Appearance.anim.durations.normal
                 easing.type: Easing.OutCubic
-            }
-        }
-
-        Item {
-            id: bongocat
-
-            implicitWidth: visualiser.width
-            implicitHeight: visualiser.height
-
-            AnimatedImage {
-                anchors.centerIn: parent
-
-                width: visualiser.width * 0.75
-                height: visualiser.height * 0.75
-
-                playing: Players.active?.isPlaying ?? false
-                speed: Audio.beatTracker.bpm / Appearance.anim.mediaGifSpeedAdjustment // qmllint disable unresolved-type
-                source: Paths.absolutePath(Config.paths.mediaGif)
-                asynchronous: true
-                fillMode: AnimatedImage.PreserveAspectFit
             }
         }
     }
