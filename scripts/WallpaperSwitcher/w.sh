@@ -10,17 +10,17 @@ effect="wipe"   # grow | wave | wipe | fade | any …
 
 ensure_swww_daemon() {
     # Prefer a real query over pgrep: it proves the socket is reachable in this environment.
-    if swww query >/dev/null 2>&1; then
+    if awww query >/dev/null 2>&1; then
         return 0
     fi
 
     # Start daemon (idempotent enough; if it's already running, query above would have succeeded).
-    swww-daemon --format xrgb >/dev/null 2>&1 &
+    awww-daemon --format xrgb >/dev/null 2>&1 &
     disown || true
 
     # Give the daemon a moment to create the socket.
     for _ in {1..40}; do
-        if swww query >/dev/null 2>&1; then
+        if awww query >/dev/null 2>&1; then
             return 0
         fi
         sleep 0.05
@@ -46,7 +46,7 @@ fi
 ensure_swww_daemon || exit 1
 
 # Set wallpaper using swww
-swww img -o "$monitor" "$wallpaper" \
+awww img -o "$monitor" "$wallpaper" \
         --transition-type "$effect" \
         --transition-fps  "$fps" \
         --transition-duration "$dur" \

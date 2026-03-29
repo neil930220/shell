@@ -18,84 +18,11 @@ CollapsibleSection {
     title: qsTr("Fonts")
     showBackground: true
 
-    CollapsibleSection {
-        id: materialFontSection
-        title: qsTr("Material font family")
-        expanded: true
-        showBackground: true
-        nested: true
-
-        Loader {
-            id: materialFontLoader
-            Layout.fillWidth: true
-            Layout.preferredHeight: item ? Math.min(item.contentHeight, 300) : 0
-            active: materialFontSection.expanded
-
-            sourceComponent: StyledListView {
-                id: materialFontList
-                property alias contentHeight: materialFontList.contentHeight
-
-                clip: true
-                spacing: Appearance.spacing.small / 2
-                model: Qt.fontFamilies()
-
-                StyledScrollBar.vertical: StyledScrollBar {
-                    flickable: materialFontList
-                }
-
-                delegate: StyledRect {
-                    required property string modelData
-                    required property int index
-
-                    width: ListView.view.width
-
-                    readonly property bool isCurrent: modelData === rootPane.fontFamilyMaterial
-                    color: Qt.alpha(Colours.tPalette.m3surfaceContainer, isCurrent ? Colours.tPalette.m3surfaceContainer.a : 0)
-                    radius: Appearance.rounding.normal
-                    border.width: isCurrent ? 1 : 0
-                    border.color: Colours.palette.m3primary
-
-                    StateLayer {
-                        function onClicked(): void {
-                            rootPane.fontFamilyMaterial = modelData;
-                            rootPane.saveConfig();
-                        }
-                    }
-
-                    RowLayout {
-                        id: fontFamilyMaterialRow
-
-                        anchors.left: parent.left
-                        anchors.right: parent.right
-                        anchors.verticalCenter: parent.verticalCenter
-                        anchors.margins: Appearance.padding.normal
-
-                        spacing: Appearance.spacing.normal
-
-                        StyledText {
-                            text: modelData
-                            font.pointSize: Appearance.font.size.normal
-                        }
-
-                        Item {
-                            Layout.fillWidth: true
-                        }
-
-                        Loader {
-                            active: isCurrent
-
-                            sourceComponent: MaterialIcon {
-                                text: "check"
-                                color: Colours.palette.m3onSurfaceVariant
-                                font.pointSize: Appearance.font.size.large
-                            }
-                        }
-                    }
-
-                    implicitHeight: fontFamilyMaterialRow.implicitHeight + Appearance.padding.normal * 2
-                }
-            }
-        }
+    // Material font section hidden - it should always be "Material Symbols Rounded" for icons to work
+    // Users should not change this font as it's used for displaying icons, not text
+    Item {
+        visible: false
+        enabled: false
     }
 
     CollapsibleSection {

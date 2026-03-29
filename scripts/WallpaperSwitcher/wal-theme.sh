@@ -9,7 +9,7 @@ current_wallpaper="${1:-}"
 
 if [ -z "$current_wallpaper" ]; then
     # Fallback: try to read the currently displayed image from swww
-    current_wallpaper="$(swww query 2>/dev/null | sed -n 's/.*currently displaying: image: //p' | head -n 1 || true)"
+    current_wallpaper="$(awww query 2>/dev/null | sed -n 's/.*currently displaying: image: //p' | head -n 1 || true)"
 fi
 
 # Expand common forms ($HOME, \$HOME, ~)
