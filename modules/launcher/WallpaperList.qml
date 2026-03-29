@@ -1,12 +1,12 @@
 pragma ComponentBehavior: Bound
 
 import "items"
+import QtQuick
+import Quickshell
 import qs.components
 import qs.components.controls
 import qs.services
 import qs.config
-import Quickshell
-import QtQuick
 
 Item {
     id: root
@@ -19,7 +19,6 @@ Item {
     implicitWidth: pathView.implicitWidth
     implicitHeight: pathView.implicitHeight + switcherButton.height + Appearance.spacing.medium
 
-    // Button to open full wallpaper switcher
     IconButton {
         id: switcherButton
 

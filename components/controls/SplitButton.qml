@@ -1,9 +1,9 @@
 import ".."
-import qs.services
-import qs.config
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Window
+import qs.services
+import qs.config
 
 Row {
     id: root
@@ -51,14 +51,14 @@ Row {
         StateLayer {
             id: stateLayer
 
+            function onClicked(): void {
+                root.active?.clicked();
+            }
+
             rect.topRightRadius: parent.topRightRadius
             rect.bottomRightRadius: parent.bottomRightRadius
             color: root.textColour
             disabled: root.disabled
-
-            function onClicked(): void {
-                root.active?.clicked();
-            }
         }
 
         RowLayout {
@@ -125,14 +125,14 @@ Row {
         StateLayer {
             id: expandStateLayer
 
+            function onClicked(): void {
+                root.expanded = !root.expanded;
+            }
+
             rect.topLeftRadius: parent.topLeftRadius
             rect.bottomLeftRadius: parent.bottomLeftRadius
             color: root.textColour
             disabled: root.disabled
-
-            function onClicked(): void {
-                root.expanded = !root.expanded;
-            }
         }
 
         MaterialIcon {

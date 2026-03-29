@@ -1,23 +1,27 @@
-import qs.components.misc
-import qs.modules.controlcenter
-import qs.services
-import Caelestia
 import Quickshell
 import Quickshell.Io
+import Caelestia
+import qs.components.misc
+import qs.services
+import qs.modules.controlcenter
 
 Scope {
     id: root
 
     property bool launcherInterrupted
-    readonly property bool hasFullscreen: Hypr.focusedWorkspace?.toplevels.values.some(t => t.lastIpcObject.fullscreen === 2) ?? false
+    readonly property bool hasFullscreen: Hypr.focusedWorkspace?.toplevels.values.some(t => t.lastIpcObject.fullscreen > 1) ?? false
 
+    // qmllint disable unresolved-type
     CustomShortcut {
+        // qmllint enable unresolved-type
         name: "controlCenter"
         description: "Open control center"
         onPressed: WindowFactory.create()
     }
 
+    // qmllint disable unresolved-type
     CustomShortcut {
+        // qmllint enable unresolved-type
         name: "showall"
         description: "Toggle launcher, dashboard and osd"
         onPressed: {
@@ -28,7 +32,9 @@ Scope {
         }
     }
 
+    // qmllint disable unresolved-type
     CustomShortcut {
+        // qmllint enable unresolved-type
         name: "dashboard"
         description: "Toggle dashboard"
         onPressed: {
@@ -39,7 +45,9 @@ Scope {
         }
     }
 
+    // qmllint disable unresolved-type
     CustomShortcut {
+        // qmllint enable unresolved-type
         name: "session"
         description: "Toggle session menu"
         onPressed: {
@@ -50,7 +58,9 @@ Scope {
         }
     }
 
+    // qmllint disable unresolved-type
     CustomShortcut {
+        // qmllint enable unresolved-type
         name: "launcher"
         description: "Toggle launcher"
         onPressed: root.launcherInterrupted = false
@@ -63,24 +73,52 @@ Scope {
         }
     }
 
+    // qmllint disable unresolved-type
     CustomShortcut {
+        // qmllint enable unresolved-type
         name: "launcherInterrupt"
         description: "Interrupt launcher keybind"
         onPressed: root.launcherInterrupted = true
     }
 
+    // qmllint disable unresolved-type
     CustomShortcut {
+        // qmllint enable unresolved-type
         name: "clipboard"
         description: "Toggle clipboard"
-		onPressed: {
-			console.log("[Shortcuts] Clipboard toggle requested; current visible= " + Clipboard.visible);
-			Clipboard.toggleVisible();
-		}
+        onPressed: {
+            console.log("[Shortcuts] Clipboard toggle requested; current visible= " + Clipboard.visible);
+            Clipboard.toggleVisible();
+        }
+    }
+
+    // qmllint disable unresolved-type
+    CustomShortcut {
+        // qmllint enable unresolved-type
+        name: "sidebar"
+        description: "Toggle sidebar"
+        onPressed: {
+            if (root.hasFullscreen)
+                return;
+            const visibilities = Visibilities.getForActive();
+            visibilities.sidebar = !visibilities.sidebar;
+        }
+    }
+
+    // qmllint disable unresolved-type
+    CustomShortcut {
+        // qmllint enable unresolved-type
+        name: "utilities"
+        description: "Toggle utilities"
+        onPressed: {
+            if (root.hasFullscreen)
+                return;
+            const visibilities = Visibilities.getForActive();
+            visibilities.utilities = !visibilities.utilities;
+        }
     }
 
     IpcHandler {
-        target: "drawers"
-
         function toggle(drawer: string): void {
             if (list().split("\n").includes(drawer)) {
                 if (root.hasFullscreen && ["launcher", "session", "dashboard"].includes(drawer))
@@ -96,19 +134,19 @@ Scope {
             const visibilities = Visibilities.getForActive();
             return Object.keys(visibilities).filter(k => typeof visibilities[k] === "boolean").join("\n");
         }
+
+        target: "drawers"
     }
 
     IpcHandler {
-        target: "controlCenter"
-
         function open(): void {
             WindowFactory.create();
         }
+
+        target: "controlCenter"
     }
 
     IpcHandler {
-        target: "toaster"
-
         function info(title: string, message: string, icon: string): void {
             Toaster.toast(title, message, icon, Toast.Info);
         }
@@ -124,5 +162,7 @@ Scope {
         function error(title: string, message: string, icon: string): void {
             Toaster.toast(title, message, icon, Toast.Error);
         }
+
+        target: "toaster"
     }
 }

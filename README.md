@@ -219,6 +219,8 @@ default, you must create it manually.
 ```json
 {
     "appearance": {
+        "mediaGifSpeedAdjustment": 300,
+        "sessionGifSpeed": 0.7,
         "anim": {
             "durations": {
                 "scale": 1
@@ -251,6 +253,7 @@ default, you must create it manually.
         }
     },
     "general": {
+        "logo": "caelestia",
         "apps": {
             "terminal": ["foot"],
             "audio": ["pavucontrol"],
@@ -328,7 +331,14 @@ default, you must create it manually.
         }
     },
     "bar": {
+        "activeWindow": {
+            "compact": false,
+            "inverted": false,
+            "showOnHover": true
+        },
         "clock": {
+            "background": false,
+            "showDate": false,
             "showIcon": true
         },
         "dragThreshold": 20,
@@ -411,6 +421,12 @@ default, you must create it manually.
             "specialWorkspaceIcons": [
                 {
                     "name": "steam",
+                    "icon": "sports_esports"
+                }
+            ],
+            "windowIcons": [
+                {
+                    "regex": "steam(_app_(default|[0-9]+))?",
                     "icon": "sports_esports"
                 }
             ]
@@ -560,10 +576,12 @@ default, you must create it manually.
             "wallpapers": false
         },
         "showOnHover": false,
+        "favouriteApps": [],
         "hiddenApps": []
     },
     "lock": {
-        "recolourLogo": false
+        "recolourLogo": false,
+        "hideNotifs": false
     },
     "notifs": {
         "actionOnClick": false,
@@ -582,7 +600,8 @@ default, you must create it manually.
     "paths": {
         "mediaGif": "root:/assets/bongocat.gif",
         "sessionGif": "root:/assets/kurukuru.gif",
-        "wallpaperDir": "~/Pictures/Wallpapers"
+        "wallpaperDir": "~/Pictures/Wallpapers",
+        "lyricsDir": "~/Music/lyrics"
     },
     "services": {
         "audioIncrement": 0.1,
@@ -593,6 +612,7 @@ default, you must create it manually.
         "playerAliases": [{ "from": "com.github.th_ch.youtube_music", "to": "YT Music" }],
         "weatherLocation": "",
         "useFahrenheit": false,
+        "useFahrenheitPerformance": false,
         "useTwelveHourClock": false,
         "smartScheme": true,
         "visualiserBars": 45
@@ -601,6 +621,12 @@ default, you must create it manually.
         "dragThreshold": 30,
         "enabled": true,
         "vimKeybinds": false,
+        "icons": {
+            "logout": "logout",
+            "shutdown": "power_settings_new",
+            "hibernate": "downloading",
+            "reboot": "cached"
+        },
         "commands": {
             "logout": ["loginctl", "terminate-user", ""],
             "shutdown": ["systemctl", "poweroff"],
@@ -639,7 +665,37 @@ default, you must create it manually.
                     "enabled": false
                 }
             ]
-        }
+        },
+        "quickToggles": [
+            {
+                "id": "wifi",
+                "enabled": true
+            },
+            {
+                "id": "bluetooth",
+                "enabled": true
+            },
+            {
+                "id": "mic",
+                "enabled": true
+            },
+            {
+                "enabled": true,
+                "id": "settings"
+            },
+            {
+                "id": "gameMode",
+                "enabled": true
+            },
+            {
+                "id": "dnd",
+                "enabled": true
+            },
+            {
+                "id": "vpn",
+                "enabled": true
+            }
+        ]
     }
 }
 ```

@@ -1,18 +1,18 @@
 pragma ComponentBehavior: Bound
 
-import qs.components
+import QtQuick
+import Quickshell
+import Quickshell.Wayland
 import qs.components.containers
 import qs.services
 import qs.config
-import Quickshell
-import Quickshell.Wayland
-import QtQuick
 
 Loader {
+    asynchronous: true
     active: Config.background.enabled
 
     sourceComponent: Variants {
-        model: Quickshell.screens
+        model: Screens.screens
 
         StyledWindow {
             id: win
@@ -22,8 +22,9 @@ Loader {
             screen: modelData
             name: "background"
             WlrLayershell.exclusionMode: ExclusionMode.Ignore
-            WlrLayershell.layer: WlrLayer.Background
-            color: "black"
+            WlrLayershell.layer: Config.background.wallpaperEnabled ? WlrLayer.Background : WlrLayer.Bottom
+            color: Config.background.wallpaperEnabled ? "black" : "transparent"
+            surfaceFormat.opaque: false
 
             anchors.top: true
             anchors.bottom: true
@@ -35,8 +36,15 @@ Loader {
 
                 anchors.fill: parent
 
-                Wallpaper {
+                Loader {
                     id: wallpaper
+
+                    asynchronous: true
+
+                    anchors.fill: parent
+                    active: Config.background.wallpaperEnabled
+
+                    sourceComponent: Wallpaper {}
                 }
 
                 Visualiser {
@@ -48,6 +56,8 @@ Loader {
 
             Loader {
                 id: clockLoader
+
+                asynchronous: true
                 active: Config.background.desktopClock.enabled
 
                 anchors.margins: Appearance.padding.large * 2
@@ -57,6 +67,7 @@ Loader {
                 states: [
                     State {
                         name: "top-left"
+
                         AnchorChanges {
                             target: clockLoader
                             anchors.top: parent.top
@@ -65,6 +76,7 @@ Loader {
                     },
                     State {
                         name: "top-center"
+
                         AnchorChanges {
                             target: clockLoader
                             anchors.top: parent.top
@@ -73,6 +85,7 @@ Loader {
                     },
                     State {
                         name: "top-right"
+
                         AnchorChanges {
                             target: clockLoader
                             anchors.top: parent.top
@@ -81,6 +94,7 @@ Loader {
                     },
                     State {
                         name: "middle-left"
+
                         AnchorChanges {
                             target: clockLoader
                             anchors.verticalCenter: parent.verticalCenter
@@ -89,6 +103,7 @@ Loader {
                     },
                     State {
                         name: "middle-center"
+
                         AnchorChanges {
                             target: clockLoader
                             anchors.verticalCenter: parent.verticalCenter
@@ -97,6 +112,7 @@ Loader {
                     },
                     State {
                         name: "middle-right"
+
                         AnchorChanges {
                             target: clockLoader
                             anchors.verticalCenter: parent.verticalCenter
@@ -105,6 +121,7 @@ Loader {
                     },
                     State {
                         name: "bottom-left"
+
                         AnchorChanges {
                             target: clockLoader
                             anchors.bottom: parent.bottom
@@ -113,6 +130,7 @@ Loader {
                     },
                     State {
                         name: "bottom-center"
+
                         AnchorChanges {
                             target: clockLoader
                             anchors.bottom: parent.bottom
@@ -121,6 +139,7 @@ Loader {
                     },
                     State {
                         name: "bottom-right"
+
                         AnchorChanges {
                             target: clockLoader
                             anchors.bottom: parent.bottom

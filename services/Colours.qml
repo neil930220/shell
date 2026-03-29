@@ -1,13 +1,13 @@
 pragma Singleton
 pragma ComponentBehavior: Bound
 
-import qs.config
-import qs.utils
-import qs.services
-import Caelestia
+import QtQuick
 import Quickshell
 import Quickshell.Io
-import QtQuick
+import Caelestia
+import qs.services
+import qs.config
+import qs.utils
 
 Singleton {
     id: root
@@ -73,7 +73,21 @@ Singleton {
         Quickshell.execDetached(["caelestia", "scheme", "set", "--notify", "-m", mode]);
     }
 
-    // Apply theme palette overrides into `themed`
+    function reloadHyprRules(): void {
+        const str = "keyword layerrule %1 %2, match:namespace caelestia-drawers";
+        Hypr.extras.batchMessage([str.arg("blur").arg(transparency.enabled ? 1 : 0), str.arg("ignore_alpha").arg(transparency.base - 0.03)]);
+    }
+
+    Component.onCompleted: debounceTimer.triggered()
+
+    Connections {
+        function onConfigReloaded(): void {
+            root.reloadHyprRules();
+        }
+
+        target: Hypr
+    }
+
     Connections {
         target: Themes
 
@@ -82,7 +96,6 @@ Singleton {
             console.log("Colours: onApplied theme", name, "palette keys:", keys);
             if (Themes.active?.palette) {
                 const p = Themes.active.palette;
-                // copy known keys if present
                 themed.m3primary_paletteKeyColor = p.m3primary_paletteKeyColor ?? current.m3primary_paletteKeyColor;
                 themed.m3secondary_paletteKeyColor = p.m3secondary_paletteKeyColor ?? current.m3secondary_paletteKeyColor;
                 themed.m3tertiary_paletteKeyColor = p.m3tertiary_paletteKeyColor ?? current.m3tertiary_paletteKeyColor;
@@ -159,11 +172,18 @@ Singleton {
                 themed.term15 = p.term15 ?? current.term15;
             }
         }
+
         function onDeactivated(): void {
-            // clear themed to current
             console.log("Colours: onDeactivated – reverting to current palette");
             themed = current;
         }
+    }
+
+    FileView {
+        path: `${Paths.state}/scheme.json`
+        watchChanges: true
+        onFileChanged: reload()
+        onLoaded: root.load(text(), false)
     }
 
     ImageAnalyser {
@@ -172,10 +192,20 @@ Singleton {
         source: Wallpapers.current
     }
 
+    Timer {
+        id: debounceTimer
+
+        interval: 300
+        onTriggered: root.reloadHyprRules()
+    }
+
     component Transparency: QtObject {
         readonly property bool enabled: Appearance.transparency.enabled
-        readonly property real base: Appearance.transparency.base - (root.light ? 0.1 : 0)
+        readonly property real base: Math.max(0, Math.min(1, Appearance.transparency.base - (root.light ? 0.1 : 0)))
         readonly property real layers: Appearance.transparency.layers
+
+        onEnabledChanged: debounceTimer.restart()
+        onBaseChanged: debounceTimer.restart()
     }
 
     component M3TPalette: QtObject {

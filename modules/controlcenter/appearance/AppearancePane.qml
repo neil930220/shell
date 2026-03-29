@@ -4,19 +4,19 @@ import ".."
 import "../components"
 import "./sections"
 import "../../launcher/services"
+import QtQuick
+import QtQuick.Layouts
+import Quickshell
+import Quickshell.Widgets
+import Caelestia.Models
 import qs.components
+import qs.components.containers
 import qs.components.controls
 import qs.components.effects
-import qs.components.containers
 import qs.components.images
 import qs.services
 import qs.config
 import qs.utils
-import Caelestia.Models
-import Quickshell
-import Quickshell.Widgets
-import QtQuick
-import QtQuick.Layouts
 
 Item {
     id: root
@@ -48,12 +48,11 @@ Item {
     property bool desktopClockBackgroundBlur: Config.background.desktopClock.background.blur ?? false
     property bool desktopClockInvertColors: Config.background.desktopClock.invertColors ?? false
     property bool backgroundEnabled: Config.background.enabled ?? true
+    property bool wallpaperEnabled: Config.background.wallpaperEnabled ?? true
     property bool visualiserEnabled: Config.background.visualiser.enabled ?? false
     property bool visualiserAutoHide: Config.background.visualiser.autoHide ?? true
     property real visualiserRounding: Config.background.visualiser.rounding ?? 1
     property real visualiserSpacing: Config.background.visualiser.spacing ?? 1
-
-    anchors.fill: parent
 
     function saveConfig() {
         Config.appearance.anim.durations.scale = root.animDurationsScale;
@@ -83,6 +82,8 @@ Item {
         Config.background.desktopClock.background.blur = root.desktopClockBackgroundBlur;
         Config.background.desktopClock.invertColors = root.desktopClockInvertColors;
 
+        Config.background.wallpaperEnabled = root.wallpaperEnabled;
+
         Config.background.visualiser.enabled = root.visualiserEnabled;
         Config.background.visualiser.autoHide = root.visualiserAutoHide;
         Config.background.visualiser.rounding = root.visualiserRounding;
@@ -93,6 +94,8 @@ Item {
 
         Config.save();
     }
+
+    anchors.fill: parent
 
     Component {
         id: appearanceRightContentComponent
@@ -121,6 +124,7 @@ Item {
                     Layout.fillHeight: true
                     Layout.bottomMargin: -Appearance.padding.large * 2
 
+                    asynchronous: true
                     active: {
                         const isActive = root.session.activeIndex === 3;
                         const isAdjacent = Math.abs(root.session.activeIndex - 3) === 1;
@@ -148,10 +152,11 @@ Item {
         anchors.fill: parent
 
         leftContent: Component {
-
             StyledFlickable {
                 id: sidebarFlickable
+
                 readonly property var rootPane: root
+
                 flickableDirection: Flickable.VerticalFlick
                 contentHeight: sidebarLayout.height
 
@@ -161,13 +166,13 @@ Item {
 
                 ColumnLayout {
                     id: sidebarLayout
+
+                    readonly property var rootPane: sidebarFlickable.rootPane
+                    readonly property bool allSectionsExpanded: animationsSection.expanded && fontsSection.expanded && scalesSection.expanded && transparencySection.expanded && borderSection.expanded && backgroundSection.expanded
+
                     anchors.left: parent.left
                     anchors.right: parent.right
                     spacing: Appearance.spacing.small
-
-                    readonly property var rootPane: sidebarFlickable.rootPane
-
-                    readonly property bool allSectionsExpanded: animationsSection.expanded && fontsSection.expanded && scalesSection.expanded && transparencySection.expanded && borderSection.expanded && backgroundSection.expanded
 
                     RowLayout {
                         spacing: Appearance.spacing.smaller
@@ -200,31 +205,37 @@ Item {
 
                     AnimationsSection {
                         id: animationsSection
+
                         rootPane: sidebarFlickable.rootPane
                     }
 
                     FontsSection {
                         id: fontsSection
+
                         rootPane: sidebarFlickable.rootPane
                     }
 
                     ScalesSection {
                         id: scalesSection
+
                         rootPane: sidebarFlickable.rootPane
                     }
 
                     TransparencySection {
                         id: transparencySection
+
                         rootPane: sidebarFlickable.rootPane
                     }
 
                     BorderSection {
                         id: borderSection
+
                         rootPane: sidebarFlickable.rootPane
                     }
 
                     BackgroundSection {
                         id: backgroundSection
+
                         rootPane: sidebarFlickable.rootPane
                     }
                 }
