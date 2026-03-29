@@ -161,7 +161,7 @@ ColumnLayout {
             DelegateChoice {
                 roleValue: "updates"
                 delegate: WrappedLoader {
-                    sourceComponent: Updates {}
+                    sourceComponent: UpdatesIndicator {}
                 }
             }
             DelegateChoice {
