@@ -1,12 +1,12 @@
 pragma Singleton
 
-import qs.config
-import qs.services
-import qs.utils
-import Quickshell
-import Quickshell.Io
 import QtQuick
 import QtCore
+import Quickshell
+import Quickshell.Io
+import Caelestia.Config
+import qs.services
+import qs.utils
 
 // Theme manager: loads, applies, creates and deletes themes
 // Theme JSON schema:
@@ -41,71 +41,10 @@ Singleton {
     property string _exportMonitor
 
     // Minimal palette keys list for apply/export consistency
-    readonly property var paletteKeys: [
-        "m3primary_paletteKeyColor",
-        "m3secondary_paletteKeyColor",
-        "m3tertiary_paletteKeyColor",
-        "m3neutral_paletteKeyColor",
-        "m3neutral_variant_paletteKeyColor",
-        "m3background",
-        "m3onBackground",
-        "m3surface",
-        "m3surfaceDim",
-        "m3surfaceBright",
-        "m3surfaceContainerLowest",
-        "m3surfaceContainerLow",
-        "m3surfaceContainer",
-        "m3surfaceContainerHigh",
-        "m3surfaceContainerHighest",
-        "m3onSurface",
-        "m3surfaceVariant",
-        "m3onSurfaceVariant",
-        "m3inverseSurface",
-        "m3inverseOnSurface",
-        "m3outline",
-        "m3outlineVariant",
-        "m3shadow",
-        "m3scrim",
-        "m3surfaceTint",
-        "m3primary",
-        "m3onPrimary",
-        "m3primaryContainer",
-        "m3onPrimaryContainer",
-        "m3inversePrimary",
-        "m3secondary",
-        "m3onSecondary",
-        "m3secondaryContainer",
-        "m3onSecondaryContainer",
-        "m3tertiary",
-        "m3onTertiary",
-        "m3tertiaryContainer",
-        "m3onTertiaryContainer",
-        "m3error",
-        "m3onError",
-        "m3errorContainer",
-        "m3onErrorContainer",
-        "m3success",
-        "m3onSuccess",
-        "m3successContainer",
-        "m3onSuccessContainer",
-        "m3primaryFixed",
-        "m3primaryFixedDim",
-        "m3onPrimaryFixed",
-        "m3onPrimaryFixedVariant",
-        "m3secondaryFixed",
-        "m3secondaryFixedDim",
-        "m3onSecondaryFixed",
-        "m3onSecondaryFixedVariant",
-        "m3tertiaryFixed",
-        "m3tertiaryFixedDim",
-        "m3onTertiaryFixed",
-        "m3onTertiaryFixedVariant",
-        "term0","term1","term2","term3","term4","term5","term6","term7",
-        "term8","term9","term10","term11","term12","term13","term14","term15"
-    ]
+    readonly property var paletteKeys: ["m3primary_paletteKeyColor", "m3secondary_paletteKeyColor", "m3tertiary_paletteKeyColor", "m3neutral_paletteKeyColor", "m3neutral_variant_paletteKeyColor", "m3background", "m3onBackground", "m3surface", "m3surfaceDim", "m3surfaceBright", "m3surfaceContainerLowest", "m3surfaceContainerLow", "m3surfaceContainer", "m3surfaceContainerHigh", "m3surfaceContainerHighest", "m3onSurface", "m3surfaceVariant", "m3onSurfaceVariant", "m3inverseSurface", "m3inverseOnSurface", "m3outline", "m3outlineVariant", "m3shadow", "m3scrim", "m3surfaceTint", "m3primary", "m3onPrimary", "m3primaryContainer", "m3onPrimaryContainer", "m3inversePrimary", "m3secondary", "m3onSecondary", "m3secondaryContainer", "m3onSecondaryContainer", "m3tertiary", "m3onTertiary", "m3tertiaryContainer", "m3onTertiaryContainer", "m3error", "m3onError", "m3errorContainer", "m3onErrorContainer", "m3success", "m3onSuccess", "m3successContainer", "m3onSuccessContainer", "m3primaryFixed", "m3primaryFixedDim", "m3onPrimaryFixed", "m3onPrimaryFixedVariant", "m3secondaryFixed", "m3secondaryFixedDim", "m3onSecondaryFixed", "m3onSecondaryFixedVariant", "m3tertiaryFixed", "m3tertiaryFixedDim", "m3onTertiaryFixed", "m3onTertiaryFixedVariant", "term0", "term1", "term2", "term3", "term4", "term5", "term6", "term7", "term8", "term9", "term10", "term11", "term12", "term13", "term14", "term15"]
 
     signal applied(string name)
-    signal deactivated()
+    signal deactivated
 
     function ensureDir(): void {
         Quickshell.execDetached(["bash", "-lc", `mkdir -p '${themesDir}'`]);
@@ -114,12 +53,7 @@ Singleton {
     function getCurrentFastfetchConfig(): string {
         // Avoid Qt file APIs and non-existent helpers here; use a simple heuristic.
         // NOTE: This will not throw and will always return a string.
-        const candidates = [
-            `${Paths.home}/.config/fastfetch/dusk.jsonc`,
-            `${Paths.home}/.config/fastfetch/config.jsonc`,
-            `${Paths.home}/.config/fastfetch.jsonc`,
-            `${Paths.home}/.fastfetch.jsonc`
-        ];
+        const candidates = [`${Paths.home}/.config/fastfetch/dusk.jsonc`, `${Paths.home}/.config/fastfetch/config.jsonc`, `${Paths.home}/.config/fastfetch.jsonc`, `${Paths.home}/.fastfetch.jsonc`];
         console.warn("Themes.getCurrentFastfetchConfig: heuristic used, returning first candidate", candidates[0]);
         return candidates[0];
     }
@@ -160,6 +94,7 @@ for d in '${themesDir}'/*; do \
     printf 'dir:%s:%s:%s:%s\n' "$bn" "$d" "$preview" "$fastfetch"; \
   fi; \
 done`;
+
         listThemesProc.exec(["bash", "-lc", cmd]);
     }
 
@@ -183,8 +118,9 @@ done`;
     function remove(name: string): void {
         // Find the theme entry to get its type and path
         const entry = themes.find(t => t.name === name);
-        if (!entry) return;
-        
+        if (!entry)
+            return;
+
         if (entry.type === "dir") {
             // Remove entire directory
             Quickshell.execDetached(["bash", "-lc", `rm -rf -- '${entry.path}'`]);
@@ -199,6 +135,10 @@ done`;
     function deactivate(): void {
         active = undefined;
         activeName = "";
+        const defaults = GlobalConfig.defaults().paths;
+        GlobalConfig.paths.sessionGif = defaults.sessionGif;
+        GlobalConfig.paths.mediaGif = defaults.mediaGif;
+        GlobalConfig.save();
         // Remove persisted state
         Quickshell.execDetached(["bash", "-lc", `rm -f -- '${activePath}'`]);
         deactivated();
@@ -210,28 +150,29 @@ done`;
         if (!name)
             return;
 
-        console.log("Themes.exportCurrent: start", name)
+        console.log("Themes.exportCurrent: start", name);
 
         const palette = {};
         for (let i = 0; i < paletteKeys.length; i++) {
             const k = paletteKeys[i];
             try {
-                palette[k] = Colours.current[k];
+                palette[k] = Colours.palette[k];
             } catch (e) {}
         }
 
         // Export as a folder with theme.json and colors.qml
         ensureDir();
-        console.log("Themes.exportCurrent: ensured themesDir", themesDir)
+        console.log("Themes.exportCurrent: ensured themesDir", themesDir);
         const dir = `${themesDir}/${name}`;
-        console.log("Themes.exportCurrent: target dir", dir)
+        console.log("Themes.exportCurrent: target dir", dir);
 
         // Build colors.qml content from current palette
         let colorsQml = "pragma ComponentBehavior: Bound\nimport QtQml\nimport QtQuick\n\nQtObject {\n";
         for (let i = 0; i < paletteKeys.length; i++) {
             const k = paletteKeys[i];
             const v = palette[k];
-            if (v === undefined) continue;
+            if (v === undefined)
+                continue;
             const vs = String(v);
             const needsQuote = !(vs.startsWith("Qt.") || vs.match(/^(rgba|hsla?)/i) || vs.startsWith("#") === false);
             // Always quote hex strings to avoid parser issues
@@ -243,24 +184,24 @@ done`;
         // Fetch current monitor wallpapers to ensure theme.json gets populated
         WallpaperSwitcher.selectedMonitor = Hypr.focusedMonitor?.name ?? WallpaperSwitcher.selectedMonitor;
         const monitor = WallpaperSwitcher.selectedMonitor || "";
-        console.log("Themes.exportCurrent: selected monitor", monitor)
+        console.log("Themes.exportCurrent: selected monitor", monitor);
         _exportName = name;
         _exportDir = dir;
-        _exportSessionGif = Config.paths.sessionGif;
-        _exportMediaGif = Config.paths.mediaGif;
+        _exportSessionGif = GlobalConfig.paths.sessionGif;
+        _exportMediaGif = GlobalConfig.paths.mediaGif;
         _exportFastfetchConfig = "";
         _exportMonitor = monitor;
-        console.log("Themes.exportCurrent: detecting fastfetch config via shell")
+        console.log("Themes.exportCurrent: detecting fastfetch config via shell");
         _exportColorsQml = colorsQml;
         detectFastfetchProc.exec(["bash", "-lc", `awk '/--config/{print $NF; exit}' '${Paths.home}/.config/fastfetch/fastfetch.sh' 2>/dev/null`]);
     }
 
     function _continueExportAfterFastfetch(): void {
         const monitor = _exportMonitor || "";
-        console.log("Themes.exportCurrent: continue after fastfetch detect; monitor=", monitor, "ffcfg=", _exportFastfetchConfig)
+        console.log("Themes.exportCurrent: continue after fastfetch detect; monitor=", monitor, "ffcfg=", _exportFastfetchConfig);
         if (monitor.length > 0) {
             const cmd = `${WallpaperSwitcher.scriptsDir}/get-wallpapers.sh --current '${monitor}'`;
-            console.log("Themes.exportCurrent: getCurrentWallpapersProc exec", cmd)
+            console.log("Themes.exportCurrent: getCurrentWallpapersProc exec", cmd);
             getCurrentWallpapersProc.exec(["bash", "-lc", cmd]);
         } else {
             // Fallback: write empty wallpapers
@@ -272,18 +213,20 @@ done`;
                 fastfetchConfig: _exportFastfetchConfig
             }, null, 2);
             const cmd = `mkdir -p '${_exportDir}' && cat > '${_exportDir}/theme.json' <<'JSON'\n${json}\nJSON\ncat > '${_exportDir}/colors.qml' <<'QML'\n${_exportColorsQml}\nQML`;
-            console.log("Themes.exportCurrent: fallback write cmd", cmd)
+            console.log("Themes.exportCurrent: fallback write cmd", cmd);
             Quickshell.execDetached(["bash", "-lc", cmd]);
             Qt.callLater(reload);
         }
     }
+
+    Component.onCompleted: reload()
 
     Process {
         id: listThemesProc
 
         stdout: StdioCollector {
             onStreamFinished: {
-                console.log("Themes.listThemesProc: stdout received")
+                console.log("Themes.listThemesProc: stdout received");
                 const lines = text.trim().length ? text.trim().split("\n").filter(n => n.length > 0) : [];
                 const list = [];
                 for (const line of lines) {
@@ -291,19 +234,25 @@ done`;
                     const second = line.indexOf(":", first + 1);
                     const third = line.indexOf(":", second + 1);
                     const fourth = line.indexOf(":", third + 1);
-                    if (first === -1 || second === -1 || third === -1 || fourth === -1) continue;
+                    if (first === -1 || second === -1 || third === -1 || fourth === -1)
+                        continue;
                     const type = line.slice(0, first);
                     const name = line.slice(first + 1, second);
                     const path = line.slice(second + 1, third);
                     const preview = line.slice(third + 1, fourth);
                     const fastfetchConfig = line.slice(fourth + 1);
                     console.log(`Theme: ${name}, type: ${type}, preview: "${preview}", fastfetch: "${fastfetchConfig}"`);
-                    list.push({ name, path, type, preview, fastfetchConfig });
+                    list.push({
+                        name,
+                        path,
+                        type,
+                        preview,
+                        fastfetchConfig
+                    });
                 }
                 root.themes = list;
             }
         }
-
         stderr: StdioCollector {
             onStreamFinished: console.error("Themes.listThemesProc: stderr:", text)
         }
@@ -320,22 +269,16 @@ done`;
                 let cfg = (text || "").trim();
                 if (!cfg || cfg.length === 0) {
                     // Heuristic fallback without filesystem calls
-                    const candidates = [
-                        `${Paths.home}/.config/fastfetch/dusk.jsonc`,
-                        `${Paths.home}/.config/fastfetch/config.jsonc`,
-                        `${Paths.home}/.config/fastfetch.jsonc`,
-                        `${Paths.home}/.fastfetch.jsonc`
-                    ];
+                    const candidates = [`${Paths.home}/.config/fastfetch/dusk.jsonc`, `${Paths.home}/.config/fastfetch/config.jsonc`, `${Paths.home}/.config/fastfetch.jsonc`, `${Paths.home}/.fastfetch.jsonc`];
                     cfg = candidates[0];
-                    console.warn("Themes.detectFastfetchProc: no output; using heuristic", cfg)
+                    console.warn("Themes.detectFastfetchProc: no output; using heuristic", cfg);
                 } else {
-                    console.log("Themes.detectFastfetchProc: detected", cfg)
+                    console.log("Themes.detectFastfetchProc: detected", cfg);
                 }
                 _exportFastfetchConfig = cfg;
                 _continueExportAfterFastfetch();
             }
         }
-
         stderr: StdioCollector {
             onStreamFinished: console.error("Themes.detectFastfetchProc: stderr:", text)
         }
@@ -371,12 +314,13 @@ done`;
 
         stdout: StdioCollector {
             onStreamFinished: {
-                console.log("Themes.getCurrentWallpapersProc: stdout received")
+                console.log("Themes.getCurrentWallpapersProc: stdout received");
                 try {
                     const arr = JSON.parse(text || "[]");
                     const obj = {};
                     for (let i = 0; i < arr.length; i++) {
-                        if (arr[i]) obj[`${i + 1}`] = arr[i];
+                        if (arr[i])
+                            obj[`${i + 1}`] = arr[i];
                     }
                     const json = JSON.stringify({
                         name: root._exportName,
@@ -387,7 +331,7 @@ done`;
                     }, null, 2);
 
                     const cmd = `mkdir -p '${root._exportDir}' && cat > '${root._exportDir}/theme.json' <<'JSON'\n${json}\nJSON\ncat > '${root._exportDir}/colors.qml' <<'QML'\n${root._exportColorsQml}\nQML`;
-                    console.log("Themes.getCurrentWallpapersProc: write cmd", cmd)
+                    console.log("Themes.getCurrentWallpapersProc: write cmd", cmd);
                     Quickshell.execDetached(["bash", "-lc", cmd]);
 
                     // Clear pending
@@ -404,7 +348,6 @@ done`;
                 }
             }
         }
-
         stderr: StdioCollector {
             onStreamFinished: console.error("Themes.getCurrentWallpapersProc: stderr:", text)
         }
@@ -424,17 +367,18 @@ done`;
 
                     console.log("Themes: loaded theme.json", root.activeName, "palette:", !!obj.palette, "wallpapers:", Object.keys(obj.wallpapers || {}).length);
 
+                    // Theme GIFs are regular global path settings in the new
+                    // config architecture. Reset omitted values so switching
+                    // themes cannot retain the previous theme's assets.
+                    const defaults = GlobalConfig.defaults().paths;
+                    GlobalConfig.paths.sessionGif = obj.sessionGif || defaults.sessionGif;
+                    GlobalConfig.paths.mediaGif = obj.mediaGif || defaults.mediaGif;
+                    GlobalConfig.save();
+
                     // Reset WallpaperSwitcher per-workspace config so old theme wallpapers don't linger.
                     // This ensures w-1..w-10 are refreshed when switching themes, even if the theme
                     // doesn't explicitly define all 10 wallpapers.
                     Quickshell.execDetached(["bash", `${WallpaperSwitcher.scriptsDir}/reset-theme-config.sh`, root.activeName]);
-
-                    // Apply palette into Colours.current fields
-                    if (obj.palette) {
-                        for (const key in obj.palette) {
-                            try { Colours.current[key] = obj.palette[key]; } catch (e) {}
-                        }
-                    }
 
                     // Apply per-workspace wallpapers to focused monitor
                     let queuedAny = false;
@@ -446,7 +390,11 @@ done`;
                             for (const ws in obj.wallpapers) {
                                 const path = obj.wallpapers[ws];
                                 if (path)
-                                    root._applyQueue.push({ ws, path, monitor });
+                                    root._applyQueue.push({
+                                        ws,
+                                        path,
+                                        monitor
+                                    });
                             }
                         }
                         if (root._applyQueue.length > 0) {
@@ -467,7 +415,7 @@ done`;
                     const lookupName = root.activeName || root._requestedTheme;
                     const entry = root.themes.find(t => t.name === lookupName);
                     console.log("Themes: looking for entry", lookupName, "found:", !!entry, "themes.length:", root.themes.length);
-                    
+
                     // If we have an entry and it's a directory, use that path
                     // Otherwise, try to construct the path assuming it might be a directory theme
                     let themePath = entry?.path;
@@ -475,7 +423,7 @@ done`;
                         // Fallback: assume directory-based theme
                         themePath = `${root.themesDir}/${lookupName}`;
                     }
-                    
+
                     if (themePath) {
                         // Try to load colors.qml (it might not exist, which is fine)
                         const colorsUrl = `file://${themePath}/colors.qml`;
@@ -505,7 +453,7 @@ done`;
                             console.log("Themes: no colors.qml or error loading it:", comp.errorString());
                         }
                     }
-                    
+
                     // Emit applied signal now that everything is loaded
                     root.applied(root.activeName);
 
@@ -538,6 +486,7 @@ done`;
     // Auto-apply last active theme on startup
     FileView {
         path: root.activePath
+
         onLoaded: {
             const n = text().trim();
             if (n.length > 0 && n !== root.activeName) {
@@ -546,9 +495,4 @@ done`;
             }
         }
     }
-
-    Component.onCompleted: reload()
 }
-
-
-

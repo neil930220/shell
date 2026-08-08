@@ -1,22 +1,22 @@
-import qs.components
-import qs.config
-import qs.services
-import Quickshell
 import QtQuick
+import Quickshell
+import Quickshell.Hyprland
+import Quickshell.Wayland
+import qs.components
+import qs.services
 
 Loader {
     id: loader
 
-    readonly property bool shouldBeActive: Clipboard.visible
+    required property ScreenState screenState
+    readonly property bool shouldBeActive: Clipboard.visible && ShellState.forActive() === screenState
 
     asynchronous: true
     active: false
     opacity: 0
     visible: opacity > 0
-    
     width: active ? implicitWidth : 0
     height: active ? implicitHeight : 0
-
     anchors.centerIn: parent
 
     states: State {
@@ -28,7 +28,6 @@ Loader {
             loader.active: true
         }
     }
-
     transitions: [
         Transition {
             from: ""
@@ -38,6 +37,7 @@ Loader {
                 PropertyAction {
                     property: "active"
                 }
+
                 Anim {
                     property: "opacity"
                 }
@@ -51,17 +51,30 @@ Loader {
                 Anim {
                     property: "opacity"
                 }
+
                 PropertyAction {
                     property: "active"
                 }
             }
         }
     ]
-
     sourceComponent: Component {
         ClipboardContent {
             focus: true
         }
     }
-}
 
+    HyprlandFocusGrab {
+        active: loader.shouldBeActive
+        windows: [QsWindow.window]
+
+        onCleared: Clipboard.visible = false
+    }
+
+    Binding {
+        when: loader.shouldBeActive
+        target: QsWindow.window
+        property: "WlrLayershell.keyboardFocus"
+        value: WlrKeyboardFocus.OnDemand
+    }
+}

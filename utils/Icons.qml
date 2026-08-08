@@ -3,7 +3,7 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Services.Notifications
-import qs.config
+import Caelestia.Config
 
 Singleton {
     id: root
@@ -116,7 +116,7 @@ Singleton {
     }
 
     function getAppCategoryIcon(name: string, fallback: string): string {
-        for (const iconConfig of Config.bar.workspaces.windowIcons)
+        for (const iconConfig of GlobalConfig.bar.workspaces.windowIcons)
             if (matchIconConfig(name, iconConfig))
                 return iconConfig.icon;
 
@@ -221,7 +221,7 @@ Singleton {
     function getSpecialWsIcon(name: string): string {
         name = name.toLowerCase().slice("special:".length);
 
-        for (const iconConfig of Config.bar.workspaces.specialWorkspaceIcons)
+        for (const iconConfig of GlobalConfig.bar.workspaces.specialWorkspaceIcons)
             if (matchIconConfig(name, iconConfig))
                 return iconConfig.icon;
 
@@ -238,21 +238,30 @@ Singleton {
         return name[0].toUpperCase();
     }
 
+    function getWorkspaceIcon(workspaceId: int): string {
+        return workspaceIcons[workspaceId] ?? "";
+    }
+
     function getTrayIcon(id: string, icon: string): string {
-        for (const sub of Config.bar.tray.iconSubs)
+        for (const sub of GlobalConfig.bar.tray.iconSubs)
             if (sub.id === id)
                 return sub.image ? Qt.resolvedUrl(sub.image) : Quickshell.iconPath(sub.icon);
 
         if (icon.includes("?path=")) {
             const [name, path] = icon.split("?path=");
-            icon = Qt.resolvedUrl(`${path}/${name.slice(name.lastIndexOf("/") + 1)}`);
+            const file = name.slice(name.lastIndexOf("/") + 1);
+            const themed = Quickshell.iconPath(file, true);
+            icon = themed ? themed : Qt.resolvedUrl(`${path}/${file}`);
         }
         return icon;
     }
 
-    function getWorkspaceIcon(workspaceId: int): string {
-        if (workspaceIcons.hasOwnProperty(workspaceId))
-            return workspaceIcons[workspaceId];
-        return Config.bar.workspaces.label || "󰄌";
+    function getBatteryIcon(percentage: real, charging = false): string {
+        if (percentage === 1)
+            return charging ? "battery_charging_full" : "battery_full";
+        let level = Math.floor(percentage * 7);
+        if (charging && (level === 4 || level === 1))
+            level--;
+        return charging ? `battery_charging_${(level + 3) * 10}` : `battery_${level}_bar`;
     }
 }

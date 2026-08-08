@@ -1,39 +1,40 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import Caelestia.Config
 import qs.components
 import qs.components.controls
 import qs.services
-import qs.config
 import qs.utils
 
 Item {
     id: root
 
     required property var content
-    required property DrawerVisibilities visibilities
+    required property ScreenState screenState
     required property var panels
     required property real maxHeight
-    required property StyledTextField search
+    required property SearchBar search
     required property int padding
     required property int rounding
 
-    readonly property bool showWallpapers: search.text.startsWith(`${Config.launcher.actionPrefix}wallpaper `)
-    readonly property bool showThemes: search.text.startsWith(`${Config.launcher.actionPrefix}theme `)
-    readonly property Item currentList: showWallpapers ? null : appList.item
+    readonly property bool showWallpapers: search.text.startsWith(`${GlobalConfig.launcher.actionPrefix}wallpaper `)
+    readonly property bool showThemes: search.text.startsWith(`${GlobalConfig.launcher.actionPrefix}theme `)
+    readonly property var currentList: showWallpapers || showThemes ? null : appList.item
+    property string animState: showThemes ? "themes" : showWallpapers ? "wallpapers" : "apps"
 
     anchors.horizontalCenter: parent.horizontalCenter
     anchors.bottom: parent.bottom
 
     clip: true
-    state: showThemes ? "themes" : (showWallpapers ? "wallpapers" : "apps")
+    state: animState
 
     states: [
         State {
             name: "apps"
 
             PropertyChanges {
-                root.implicitWidth: Config.launcher.sizes.itemWidth
+                root.implicitWidth: root.Tokens.sizes.launcher.itemWidth
                 root.implicitHeight: Math.min(root.maxHeight, appList.implicitHeight > 0 ? appList.implicitHeight : empty.implicitHeight)
                 appList.active: true
             }
@@ -47,12 +48,8 @@ Item {
             name: "wallpapers"
 
             PropertyChanges {
-                root.implicitWidth: Math.max(1300, Config.launcher.sizes.itemWidth * 2.5)
-                // Reduce height to only what's currently visible; don't reserve space for hidden sections
-                root.implicitHeight: Math.min(
-                    root.maxHeight,
-                    wallpaperSwitcher.item ? wallpaperSwitcher.item.implicitHeight : 0
-                )
+                root.implicitWidth: Math.max(root.Tokens.sizes.launcher.itemWidth * 2, 1200)
+                root.implicitHeight: Math.min(root.maxHeight, wallpaperSwitcher.item?.implicitHeight ?? 0)
                 wallpaperSwitcher.active: true
             }
 
@@ -65,11 +62,8 @@ Item {
             name: "themes"
 
             PropertyChanges {
-                root.implicitWidth: Math.max(1000, Config.launcher.sizes.itemWidth * 2)
-                root.implicitHeight: Math.min(
-                    root.maxHeight,
-                    themeSwitcher.item ? themeSwitcher.item.implicitHeight : 0
-                )
+                root.implicitWidth: Math.max(root.Tokens.sizes.launcher.itemWidth * 1.6, 960)
+                root.implicitHeight: Math.min(root.maxHeight, themeSwitcher.item?.implicitHeight ?? 0)
                 themeSwitcher.active: true
             }
 
@@ -80,14 +74,14 @@ Item {
         }
     ]
 
-    Behavior on state {
+    Behavior on animState {
         SequentialAnimation {
             Anim {
                 target: root
                 property: "opacity"
                 from: 1
                 to: 0
-                duration: Appearance.anim.durations.small
+                type: Anim.DefaultEffects
             }
             PropertyAction {}
             Anim {
@@ -95,7 +89,7 @@ Item {
                 property: "opacity"
                 from: 0
                 to: 1
-                duration: Appearance.anim.durations.small
+                type: Anim.DefaultEffects
             }
         }
     }
@@ -108,8 +102,10 @@ Item {
         anchors.fill: parent
 
         sourceComponent: AppList {
+            objectName: "launcherAppList"
+
             search: root.search
-            visibilities: root.visibilities
+            screenState: root.screenState
         }
     }
 
@@ -122,30 +118,34 @@ Item {
         anchors.fill: parent
 
         sourceComponent: WallpaperSwitcherContent {
-            visibilities: root.visibilities
+            search: root.search
+            screenState: root.screenState
+            panels: root.panels
+            content: root.content
         }
     }
 
     Loader {
         id: themeSwitcher
 
+        asynchronous: true
         active: false
 
         anchors.fill: parent
 
         sourceComponent: ThemeSwitcherContent {
-            visibilities: root.visibilities
+            screenState: root.screenState
         }
     }
 
     Row {
         id: empty
 
-        opacity: (root.state === "apps" && root.currentList?.count === 0) ? 1 : 0
-        scale: (root.state === "apps" && root.currentList?.count === 0) ? 1 : 0.5
+        opacity: root.state === "apps" && root.currentList?.count === 0 ? 1 : 0
+        scale: root.state === "apps" && root.currentList?.count === 0 ? 1 : 0.5
 
-        spacing: Appearance.spacing.normal
-        padding: Appearance.padding.large
+        spacing: Tokens.spacing.medium
+        padding: Tokens.padding.large
 
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.verticalCenter: parent.verticalCenter
@@ -153,7 +153,7 @@ Item {
         MaterialIcon {
             text: "manage_search"
             color: Colours.palette.m3onSurfaceVariant
-            font.pointSize: Appearance.font.size.extraLarge
+            fontStyle: Tokens.font.icon.extraLarge
 
             anchors.verticalCenter: parent.verticalCenter
         }
@@ -164,19 +164,20 @@ Item {
             StyledText {
                 text: qsTr("No results")
                 color: Colours.palette.m3onSurfaceVariant
-                font.pointSize: Appearance.font.size.larger
-                font.weight: 500
+                font: Tokens.font.body.builders.large.weight(Font.Medium).build()
             }
 
             StyledText {
                 text: qsTr("Try searching for something else")
                 color: Colours.palette.m3onSurfaceVariant
-                font.pointSize: Appearance.font.size.normal
+                font: Tokens.font.body.medium
             }
         }
 
         Behavior on opacity {
-            Anim {}
+            Anim {
+                type: Anim.DefaultEffects
+            }
         }
 
         Behavior on scale {
@@ -185,20 +186,14 @@ Item {
     }
 
     Behavior on implicitWidth {
-        enabled: root.visibilities.launcher
+        enabled: root.screenState.launcher
 
-        Anim {
-            duration: Appearance.anim.durations.large
-            easing.bezierCurve: Appearance.anim.curves.emphasizedDecel
-        }
+        Anim {}
     }
 
     Behavior on implicitHeight {
-        enabled: root.visibilities.launcher
+        enabled: root.screenState.launcher
 
-        Anim {
-            duration: Appearance.anim.durations.large
-            easing.bezierCurve: Appearance.anim.curves.emphasizedDecel
-        }
+        Anim {}
     }
 }

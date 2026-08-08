@@ -4,7 +4,7 @@
 default_wallpapers="$HOME/.config/wallpapers/defaults"
 custom_wallpapers="$HOME/.config/wallpapers/custom"
 all_wallpapers="$HOME/.config/wallpapers/all"
-switcher_conf_dir="$HOME/.config/quickshell/caelestia/scripts/WallpaperSwitcher/config"
+switcher_conf_dir="${XDG_CONFIG_HOME:-$HOME/.config}/caelestia/wallpaper-switcher"
 hyprDir="$HOME/.config/hypr"
 
 to_json_array() {

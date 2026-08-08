@@ -1,11 +1,10 @@
 pragma ComponentBehavior: Bound
 
+import QtQuick
+import Quickshell
+import Caelestia.Config
 import qs.components
 import qs.services
-import qs.config
-import Quickshell
-import QtQuick
-
 
 StyledRect {
     id: root
@@ -13,11 +12,10 @@ StyledRect {
     property color colour: Colours.palette.m3secondary
 
     color: Colours.tPalette.m3surfaceContainer
-    radius: Appearance.rounding.full
+    radius: Tokens.rounding.full
     clip: true
-
-    implicitWidth: Config.bar.sizes.innerWidth
-    implicitHeight: updateColumn.implicitHeight + Appearance.padding.normal * 2
+    implicitWidth: Tokens.sizes.bar.innerWidth
+    implicitHeight: updateColumn.implicitHeight + Tokens.padding.medium * 2
 
     Component.onCompleted: Updates.refCount++
     Component.onDestruction: Updates.refCount--
@@ -28,16 +26,13 @@ StyledRect {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
-
-        spacing: Appearance.spacing.small
+        spacing: Tokens.spacing.small
 
         MaterialIcon {
             id: icon
 
             anchors.horizontalCenter: parent.horizontalCenter
-
             text: Updates.getIcon()
-
 
             Behavior on color {
                 Anim {}
@@ -48,30 +43,25 @@ StyledRect {
             id: countText
 
             anchors.horizontalCenter: parent.horizontalCenter
-
             text: Updates.updateCount.toString()
-            font.pointSize: Appearance.font.size.smaller
-            font.family: Appearance.font.family.mono
-
+            font: Tokens.font.mono.small
             opacity: Updates.hasUpdates ? 1.0 : 0.5
 
-            Behavior on color {
+            Behavior on opacity {
                 Anim {}
             }
-
-            Behavior on opacity {
+            Behavior on color {
                 Anim {}
             }
         }
     }
 
     StateLayer {
-        anchors.fill: parent
-        radius: Appearance.rounding.full
-
         function onClicked(): void {
             Updates.triggerUpdate();
         }
+
+        anchors.fill: parent
+        radius: Tokens.rounding.full
     }
 }
-

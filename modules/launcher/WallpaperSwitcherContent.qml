@@ -1,46 +1,50 @@
 pragma ComponentBehavior: Bound
 
+import QtQuick
+import QtQuick.Layouts
+import Quickshell
+import Caelestia.Config
 import qs.components
-import qs.components.controls
 import qs.components.containers
+import qs.components.controls
 import qs.components.effects
 import qs.components.filedialog
 import qs.services
-import qs.config
 import qs.utils
-import Quickshell
-import QtQuick
-import QtQuick.Layouts
 
 Item {
     id: root
 
-    required property var visibilities
+    required property SearchBar search
+    required property ScreenState screenState
+    required property var panels
+    required property var content
+    property bool showCarousel
 
     implicitWidth: parent.width
     // Use layout's computed height so rows aren't clipped; loader contributes 0 when hidden
     implicitHeight: mainColumn.implicitHeight
 
+    Component.onCompleted: {
+        WallpaperSwitcher.selectedMonitor = Hypr.focusedMonitor?.name ?? "";
+        WallpaperSwitcher.fetchWorkspaceWallpapers();
+        WallpaperSwitcher.fetchAllWallpapers();
+    }
+
     ColumnLayout {
         id: mainColumn
-        
+
         anchors.fill: parent
-        spacing: Appearance.spacing.smaller
+        spacing: Tokens.spacing.extraSmall
 
         // Workspace buttons
         StyledFlickable {
             id: workspaceRow
-            Layout.alignment: Qt.AlignHCenter
-            Layout.preferredWidth: parent.width
-            Layout.preferredHeight: 130
-            contentWidth: workspaceButtonsRow.implicitWidth
-            contentHeight: height
-            clip: true
-            flickableDirection: Flickable.HorizontalFlick
 
             property int realItemCount: 10
             property int duplicates: 3 // Number of full sets to duplicate for cycling
-            property real itemWidth: 200 + Appearance.spacing.large
+
+            property real itemWidth: 200 + Tokens.spacing.large
             property bool isRepositioning: false
 
             function centerOnCurrentWorkspace() {
@@ -59,7 +63,8 @@ Item {
             }
 
             function wrapAround() {
-                if (isRepositioning) return;
+                if (isRepositioning)
+                    return;
 
                 var singleSetWidth = realItemCount * itemWidth;
                 var middleSetStart = duplicates * singleSetWidth;
@@ -69,21 +74,31 @@ Item {
                     isRepositioning = true;
                     contentX += singleSetWidth;
                     isRepositioning = false;
-                }
+                } else
                 // If we scroll too far right, jump to equivalent position on the left
-                else if (contentX > (duplicates + 1) * singleSetWidth) {
+                if (contentX > (duplicates + 1) * singleSetWidth) {
                     isRepositioning = true;
                     contentX -= singleSetWidth;
                     isRepositioning = false;
                 }
             }
 
+            Layout.alignment: Qt.AlignHCenter
+            Layout.preferredWidth: parent.width
+            Layout.preferredHeight: 130
+            contentWidth: workspaceButtonsRow.implicitWidth
+            contentHeight: height
+            clip: true
+            flickableDirection: Flickable.HorizontalFlick
+
             onMovementEnded: wrapAround()
             onFlickEnded: wrapAround()
+            Component.onCompleted: centerOnCurrentWorkspace()
 
             Row {
                 id: workspaceButtonsRow
-                spacing: Appearance.spacing.large
+
+                spacing: Tokens.spacing.large
 
                 // Create multiple duplicate sets for seamless cycling
                 Repeater {
@@ -100,16 +115,26 @@ Item {
 
                         width: 200
                         height: 120
-
                         color: isFocused ? Colours.palette.m3primaryContainer : Colours.palette.m3surfaceContainerHigh
-                        radius: Appearance.rounding.normal
+                        radius: Tokens.rounding.large
                         border.width: isFocused ? 2 : 0
                         border.color: Colours.palette.m3primary
+                        scale: isFocused ? 1.05 : 1.0
+
+                        onIsFocusedChanged: {
+                            if (isFocused && !workspaceRow.isRepositioning) {
+                                workspaceRow.centerOnCurrentWorkspace();
+                            }
+                        }
+
+                        Behavior on scale {
+                            Anim {}
+                        }
 
                         // Wallpaper background
                         StyledClippingRect {
                             anchors.fill: parent
-                            radius: Appearance.rounding.normal
+                            radius: Tokens.rounding.large
 
                             Image {
                                 anchors.fill: parent
@@ -134,75 +159,61 @@ Item {
                             anchors.centerIn: parent
                             text: workspaceButton.workspaceId.toString()
                             color: Colours.palette.m3onSurface
-                            font.pointSize: Appearance.font.size.large
-                            font.bold: workspaceButton.isFocused
+                            font: Tokens.font.headline.builders.large.weight(workspaceButton.isFocused ? Font.Bold : Font.Medium).build()
                         }
 
                         StateLayer {
-                            radius: parent.radius
-                            color: Colours.palette.m3primary
-
                             function onClicked() {
                                 WallpaperSwitcher.selectedWorkspaceId = workspaceButton.workspaceId;
                                 WallpaperSwitcher.showAllWallpapers = true;
                             }
-                        }
 
-                        scale: isFocused ? 1.05 : 1.0
-
-                        Behavior on scale {
-                            Anim {}
-                        }
-
-                        onIsFocusedChanged: {
-                            if (isFocused && !workspaceRow.isRepositioning) {
-                                workspaceRow.centerOnCurrentWorkspace();
-                            }
+                            radius: parent.radius
+                            color: Colours.palette.m3primary
                         }
                     }
                 }
             }
-
-            Component.onCompleted: centerOnCurrentWorkspace()
         }
 
         // Action buttons rectangle
         StyledRect {
             Layout.alignment: Qt.AlignHCenter
-            Layout.preferredWidth: actionRow.implicitWidth + Appearance.spacing.large
+            Layout.preferredWidth: actionRow.implicitWidth + Tokens.spacing.large
             Layout.preferredHeight: 50
-
-            radius: Appearance.rounding.small
+            radius: Tokens.rounding.medium
             color: Colours.palette.m3surface
 
             Row {
                 id: actionRow
+
                 anchors.centerIn: parent
-                spacing: Appearance.spacing.large
+                spacing: Tokens.spacing.large
 
                 // Upload button
                 StyledRect {
                     width: 80
                     height: 40
-                    radius: Appearance.rounding.small
+                    radius: Tokens.rounding.medium
                     color: uploadMouseArea.containsMouse ? Colours.palette.m3primaryContainer : Colours.palette.m3surfaceContainerHigh
 
                     MaterialIcon {
                         anchors.centerIn: parent
                         text: "upload"
                         color: Colours.palette.m3onSurface
-                        font.pointSize: 20
+                        fontStyle: Tokens.font.icon.large
                     }
 
                     StateLayer {
                         id: uploadMouseArea
+
+                        function onClicked() {
+                            fileDialog.open();
+                        }
+
                         radius: parent.radius
                         color: Colours.palette.m3primary
                         hoverEnabled: true
-
-                        function onClicked() {
-                            fileDialog.open()
-                        }
                     }
                 }
 
@@ -210,25 +221,26 @@ Item {
                 StyledRect {
                     width: 80
                     height: 40
-                    radius: Appearance.rounding.small
+                    radius: Tokens.rounding.medium
                     color: expandMouseArea.containsMouse ? Colours.palette.m3primaryContainer : Colours.palette.m3surfaceContainerHigh
 
                     MaterialIcon {
                         anchors.centerIn: parent
                         text: WallpaperSwitcher.showAllWallpapers ? "expand_less" : "expand_more"
                         color: Colours.palette.m3onSurface
-                        font.pointSize: 20
+                        fontStyle: Tokens.font.icon.large
                     }
 
                     StateLayer {
                         id: expandMouseArea
+
+                        function onClicked() {
+                            WallpaperSwitcher.showAllWallpapers = !WallpaperSwitcher.showAllWallpapers;
+                        }
+
                         radius: parent.radius
                         color: Colours.palette.m3primary
                         hoverEnabled: true
-
-                        function onClicked() {
-                            WallpaperSwitcher.showAllWallpapers = !WallpaperSwitcher.showAllWallpapers
-                        }
                     }
                 }
 
@@ -236,25 +248,26 @@ Item {
                 StyledRect {
                     width: 80
                     height: 40
-                    radius: Appearance.rounding.small
+                    radius: Tokens.rounding.medium
                     color: customMouseArea.containsMouse ? Colours.palette.m3primaryContainer : Colours.palette.m3surfaceContainerHigh
 
                     MaterialIcon {
                         anchors.centerIn: parent
                         text: WallpaperSwitcher.showCustomOnly ? "dashboard_customize" : "apps"
                         color: Colours.palette.m3onSurface
-                        font.pointSize: 20
+                        fontStyle: Tokens.font.icon.large
                     }
 
                     StateLayer {
                         id: customMouseArea
+
+                        function onClicked() {
+                            WallpaperSwitcher.showCustomOnly = !WallpaperSwitcher.showCustomOnly;
+                        }
+
                         radius: parent.radius
                         color: Colours.palette.m3primary
                         hoverEnabled: true
-
-                        function onClicked() {
-                            WallpaperSwitcher.showCustomOnly = !WallpaperSwitcher.showCustomOnly
-                        }
                     }
                 }
 
@@ -265,20 +278,19 @@ Item {
                     // Show current selection or fallback
                     menuItems: folderItems.instances
                     active: menuItems.find(m => m.modelData === WallpaperSwitcher.selectedFolder) ?? menuItems[0]
-                    menu.onItemSelected: item => WallpaperSwitcher.selectedFolder = item.modelData
-
                     fallbackIcon: "folder"
                     fallbackText: qsTr("Folders")
-
                     label.Layout.maximumWidth: 140
                     label.elide: Text.ElideRight
                     menuOnTop: true
+
+                    menu.onItemSelected: item => WallpaperSwitcher.selectedFolder = item.modelData
 
                     Variants {
                         id: folderItems
 
                         // Empty string represents "All folders"
-                        model: [""] .concat(WallpaperSwitcher.folders)
+                        model: [""].concat(WallpaperSwitcher.folders)
 
                         MenuItem {
                             required property string modelData
@@ -294,29 +306,56 @@ Item {
                     }
                 }
 
+                // Keep the upstream wallpaper carousel available alongside
+                // the per-workspace manager.
+                StyledRect {
+                    width: 80
+                    height: 40
+                    radius: Tokens.rounding.medium
+                    color: carouselMouseArea.containsMouse ? Colours.palette.m3primaryContainer : Colours.palette.m3surfaceContainerHigh
+
+                    MaterialIcon {
+                        anchors.centerIn: parent
+                        text: root.showCarousel ? "view_carousel" : "view_day"
+                        color: Colours.palette.m3onSurface
+                        fontStyle: Tokens.font.icon.large
+                    }
+
+                    StateLayer {
+                        id: carouselMouseArea
+
+                        radius: parent.radius
+                        color: Colours.palette.m3primary
+                        hoverEnabled: true
+
+                        onClicked: root.showCarousel = !root.showCarousel
+                    }
+                }
+
                 // Shuffle button
                 StyledRect {
                     width: 80
                     height: 40
-                    radius: Appearance.rounding.small
+                    radius: Tokens.rounding.medium
                     color: shuffleMouseArea.containsMouse ? Colours.palette.m3primaryContainer : Colours.palette.m3surfaceContainerHigh
 
                     MaterialIcon {
                         anchors.centerIn: parent
                         text: "shuffle"
                         color: Colours.palette.m3onSurface
-                        font.pointSize: 20
+                        fontStyle: Tokens.font.icon.large
                     }
 
                     StateLayer {
                         id: shuffleMouseArea
+
+                        function onClicked() {
+                            WallpaperSwitcher.setRandomWallpaper();
+                        }
+
                         radius: parent.radius
                         color: Colours.palette.m3primary
                         hoverEnabled: true
-
-                        function onClicked() {
-                            WallpaperSwitcher.setRandomWallpaper()
-                        }
                     }
                 }
 
@@ -324,36 +363,57 @@ Item {
                 StyledRect {
                     width: 80
                     height: 40
-                    radius: Appearance.rounding.small
+                    radius: Tokens.rounding.medium
                     color: refreshMouseArea.containsMouse ? Colours.palette.m3primaryContainer : Colours.palette.m3surfaceContainerHigh
 
                     MaterialIcon {
                         anchors.centerIn: parent
                         text: "refresh"
                         color: Colours.palette.m3onSurface
-                        font.pointSize: 20
+                        fontStyle: Tokens.font.icon.large
                     }
 
                     StateLayer {
                         id: refreshMouseArea
+
+                        function onClicked() {
+                            WallpaperSwitcher.reload();
+                        }
+
                         radius: parent.radius
                         color: Colours.palette.m3primary
                         hoverEnabled: true
-
-                        function onClicked() {
-                            WallpaperSwitcher.reload()
-                        }
                     }
                 }
+            }
+        }
+
+        Loader {
+            Layout.fillWidth: true
+            Layout.preferredHeight: root.showCarousel ? Tokens.sizes.launcher.wallpaperHeight : 0
+            active: root.showCarousel
+            visible: active
+
+            sourceComponent: WallpaperList {
+                width: parent.width
+                height: parent.height
+                search: root.search
+                screenState: root.screenState
+                panels: root.panels
+                content: root.content
+            }
+
+            Behavior on Layout.preferredHeight {
+                Anim {}
             }
         }
 
         // Wallpaper grid
         Loader {
             id: wallpaperLoader
+
             Layout.fillWidth: true
             Layout.preferredHeight: WallpaperSwitcher.showAllWallpapers ? 120 : 0
-
             active: WallpaperSwitcher.showAllWallpapers
             visible: WallpaperSwitcher.showAllWallpapers
 
@@ -366,7 +426,7 @@ Item {
                 Row {
                     id: grid
 
-                    spacing: Appearance.spacing.tiny
+                    spacing: Tokens.spacing.extraSmall
 
                     Repeater {
                         model: WallpaperSwitcher.allWallpapers
@@ -384,8 +444,7 @@ Item {
                             StyledClippingRect {
                                 anchors.fill: parent
                                 anchors.margins: 5
-
-                                radius: Appearance.rounding.small
+                                radius: Tokens.rounding.medium
                                 color: Colours.palette.m3surfaceContainerHighest
 
                                 Image {
@@ -409,17 +468,14 @@ Item {
                                 StateLayer {
                                     id: stateLayer
 
+                                    function onClicked() {
+                                        WallpaperSwitcher.selectedMonitor = Hypr.focusedMonitor?.name ?? WallpaperSwitcher.selectedMonitor;
+                                        WallpaperSwitcher.setWorkspaceWallpaper(WallpaperSwitcher.selectedWorkspaceId, tile.path);
+                                    }
+
                                     radius: parent.radius
                                     color: Colours.palette.m3primary
                                     hoverEnabled: true
-
-                                    function onClicked() {
-                                        WallpaperSwitcher.selectedMonitor = Hypr.focusedMonitor?.name ?? WallpaperSwitcher.selectedMonitor;
-                                        WallpaperSwitcher.setWorkspaceWallpaper(
-                                            WallpaperSwitcher.selectedWorkspaceId,
-                                            tile.path
-                                        );
-                                    }
                                 }
                             }
                         }
@@ -433,19 +489,13 @@ Item {
         }
     }
 
-    Component.onCompleted: {
-        WallpaperSwitcher.selectedMonitor = Hypr.focusedMonitor?.name ?? "";
-        WallpaperSwitcher.fetchWorkspaceWallpapers();
-        WallpaperSwitcher.fetchAllWallpapers();
-    }
-
     FileDialog {
         id: fileDialog
 
         title: qsTr("Select a wallpaper")
         filterLabel: qsTr("Image files")
         filters: Images.validImageExtensions
-        
+
         onAccepted: path => {
             WallpaperSwitcher.addWallpaper(path);
             // Wait a bit then reload
@@ -455,4 +505,3 @@ Item {
         }
     }
 }
-

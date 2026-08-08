@@ -1,7 +1,8 @@
 #!/bin/bash
 
-configDir=$HOME/.config/quickshell/caelestia                       # hypr directory
-defaults=$configDir/scripts/WallpaperSwitcher/config/defaults.conf # config file
+script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+switcher_config="${XDG_CONFIG_HOME:-$HOME/.config}/caelestia/wallpaper-switcher"
+defaults="$switcher_config/defaults.conf"
 
 declare -A previous_workspace_ids
 declare -A current_wallpapers
@@ -96,7 +97,7 @@ change_wallpaper() {
         fi
 
         # Get the wallpaper from the monitor-specific config file
-        local monitor_config="$configDir/scripts/WallpaperSwitcher/config/$monitor/defaults.conf"
+        local monitor_config="$switcher_config/$monitor/defaults.conf"
         local wallpaper_raw=""
         local wallpaper_resolved=""
         
@@ -121,7 +122,7 @@ change_wallpaper() {
         # Check if wallpaper is valid and has changed (compare resolved paths)
         if [ -n "$wallpaper_resolved" ] && [ "$wallpaper_resolved" != "${current_wallpapers[$monitor]}" ]; then
             # Run the wallpaper script with the new wallpaper
-            $configDir/scripts/WallpaperSwitcher/w.sh "$wallpaper_resolved" "$monitor" &
+            "$script_dir/w.sh" "$wallpaper_resolved" "$monitor" &
 
             # Update current wallpaper and workspace ID for this monitor
             current_wallpapers[$monitor]=$wallpaper_resolved

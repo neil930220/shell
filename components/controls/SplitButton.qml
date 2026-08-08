@@ -1,9 +1,8 @@
-import ".."
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Window
+import Caelestia.Config
+import qs.components
 import qs.services
-import qs.config
 
 Row {
     id: root
@@ -13,52 +12,49 @@ Row {
         Tonal
     }
 
-    property real horizontalPadding: Appearance.padding.normal
-    property real verticalPadding: Appearance.padding.smaller
+    property real horizontalPadding: Tokens.padding.medium
+    property real verticalPadding: Tokens.padding.small
     property int type: SplitButton.Filled
     property bool disabled
     property bool menuOnTop
     property string fallbackIcon
     property string fallbackText
+    property real minLeftWidth
 
     property alias menuItems: menu.items
     property alias active: menu.active
     property alias expanded: menu.expanded
-    property alias menu: menu
-    property alias iconLabel: iconLabel
-    property alias label: label
-    property alias stateLayer: stateLayer
+    readonly property alias menu: menu
+    readonly property alias iconLabel: iconLabel
+    readonly property alias label: label
+    readonly property alias stateLayer: stateLayer
+    readonly property alias textRow: textRow
+    readonly property alias expandBtn: expandBtn
 
     property color colour: type == SplitButton.Filled ? Colours.palette.m3primary : Colours.palette.m3secondaryContainer
     property color textColour: type == SplitButton.Filled ? Colours.palette.m3onPrimary : Colours.palette.m3onSecondaryContainer
     property color disabledColour: Qt.alpha(Colours.palette.m3onSurface, 0.1)
     property color disabledTextColour: Qt.alpha(Colours.palette.m3onSurface, 0.38)
 
-    // Use window content as overlay root for menus to avoid clipping
-    readonly property Item overlayRoot: Window.window?.contentItem ?? null
-
-    spacing: Math.floor(Appearance.spacing.small / 2)
+    spacing: Math.floor(Tokens.spacing.extraSmall / 2)
 
     StyledRect {
-        radius: implicitHeight / 2 * Math.min(1, Appearance.rounding.scale)
-        topRightRadius: Appearance.rounding.small / 2
-        bottomRightRadius: Appearance.rounding.small / 2
+        radius: implicitHeight / 2 * Math.min(1, Tokens.rounding.scale)
+        topRightRadius: Tokens.rounding.medium / 2
+        bottomRightRadius: Tokens.rounding.medium / 2
         color: root.disabled ? root.disabledColour : root.colour
 
-        implicitWidth: textRow.implicitWidth + root.horizontalPadding * 2
+        implicitWidth: Math.max(root.minLeftWidth, textRow.implicitWidth + root.horizontalPadding * 2)
         implicitHeight: expandBtn.implicitHeight
 
         StateLayer {
             id: stateLayer
 
-            function onClicked(): void {
-                root.active?.clicked();
-            }
-
-            rect.topRightRadius: parent.topRightRadius
-            rect.bottomRightRadius: parent.bottomRightRadius
+            topRightRadius: parent.topRightRadius
+            bottomRightRadius: parent.bottomRightRadius
             color: root.textColour
             disabled: root.disabled
+            onClicked: root.active?.clicked()
         }
 
         RowLayout {
@@ -66,7 +62,7 @@ Row {
 
             anchors.centerIn: parent
             anchors.horizontalCenterOffset: Math.floor(root.verticalPadding / 4)
-            spacing: Appearance.spacing.small
+            spacing: Tokens.spacing.small
 
             MaterialIcon {
                 id: iconLabel
@@ -90,7 +86,7 @@ Row {
 
                 Behavior on Layout.preferredWidth {
                     Anim {
-                        easing.bezierCurve: Appearance.anim.curves.emphasized
+                        type: Anim.Emphasized
                     }
                 }
             }
@@ -100,17 +96,12 @@ Row {
     StyledRect {
         id: expandBtn
 
-        // Keep outer corners pill-shaped, and keep the inner seam slightly rounded
-        // to match the left half. When the menu opens, flatten the edge touching it.
-        readonly property real fullRad: implicitHeight / 2 * Math.min(1, Appearance.rounding.scale)
-        readonly property real seamRad: Appearance.rounding.small / 2
-
-        // Used by existing Behaviors below
-        property real rad: fullRad
+        readonly property real fullRad: implicitHeight / 2 * Math.min(1, Tokens.rounding.scale)
+        readonly property real seamRad: Tokens.rounding.medium / 2
         property real topLeftRad: seamRad
         property real bottomLeftRad: seamRad
-        property real topRightRad: (root.expanded && root.menuOnTop) ? seamRad : fullRad
-        property real bottomRightRad: (root.expanded && !root.menuOnTop) ? seamRad : fullRad
+        property real topRightRad: root.expanded && root.menuOnTop ? seamRad : fullRad
+        property real bottomRightRad: root.expanded && !root.menuOnTop ? seamRad : fullRad
 
         radius: fullRad
         topLeftRadius: topLeftRad
@@ -125,14 +116,11 @@ Row {
         StateLayer {
             id: expandStateLayer
 
-            function onClicked(): void {
-                root.expanded = !root.expanded;
-            }
-
             rect.topLeftRadius: parent.topLeftRadius
             rect.bottomLeftRadius: parent.bottomLeftRadius
             color: root.textColour
             disabled: root.disabled
+            onClicked: root.expanded = !root.expanded
         }
 
         MaterialIcon {
@@ -154,10 +142,6 @@ Row {
             }
         }
 
-        Behavior on rad {
-            Anim {}
-        }
-
         Behavior on topLeftRad {
             Anim {}
         }
@@ -173,175 +157,14 @@ Row {
         Behavior on bottomRightRad {
             Anim {}
         }
+    }
 
-        Menu {
-            id: menu
+    Menu {
+        id: menu
 
-            // Track whether we're currently using overlay parenting
-            property bool useOverlay: false
-
-            // When possible, render in window overlay to avoid clipping by parents;
-            // only enable overlay if the menu would be clipped by a clipping ancestor
-            Component.onCompleted: {
-                if (expanded) {
-                    menu.evaluateOverlayNeed();
-                    menu.applyParenting();
-                    if (menu.useOverlay) menu.updateOverlayPos();
-                }
-            }
-
-            function findClippingAncestor() {
-                // Walk up the tree from the expand button until the window content
-                var p = expandBtn.parent;
-                while (p && p !== root.overlayRoot) {
-                    if (typeof p.clip === "boolean" && p.clip) {
-                        return p;
-                    }
-                    p = p.parent;
-                }
-                return null;
-            }
-
-            function shouldUseOverlayNow() {
-                if (!root.overlayRoot)
-                    return false;
-
-                const clipper = findClippingAncestor();
-                if (!clipper)
-                    return false;
-
-                const spacing = Appearance.spacing.small;
-                const w = menu.implicitWidth;
-                const h = menu.implicitHeight;
-                if (w <= 0 || h <= 0)
-                    return false;
-
-                const btnTopLeft = expandBtn.mapToItem(clipper, 0, 0);
-                const btnBottomLeft = expandBtn.mapToItem(clipper, 0, expandBtn.height);
-                const btnTopRight = expandBtn.mapToItem(clipper, expandBtn.width, 0);
-
-                const desiredX = btnTopRight.x - w;
-                const desiredY = root.menuOnTop ? (btnTopLeft.y - h - spacing)
-                                                : (btnBottomLeft.y + spacing);
-
-                // Check if desired rect would be outside clipper's bounds
-                if (desiredX < 0 || desiredY < 0)
-                    return true;
-                if (desiredX + w > clipper.width || desiredY + h > clipper.height)
-                    return true;
-                return false;
-            }
-
-            function evaluateOverlayNeed() {
-                menu.useOverlay = shouldUseOverlayNow();
-            }
-
-            function applyParenting() {
-                if (!root.overlayRoot)
-                    return;
-
-                if (menu.useOverlay) {
-                    // Detach anchors before reparenting to overlay
-                    menu.anchors.top = undefined;
-                    menu.anchors.bottom = undefined;
-                    menu.anchors.right = undefined;
-                    menu.parent = root.overlayRoot;
-                } else if (menu.parent !== expandBtn) {
-                    // Restore parenting to expand button and default anchors
-                    menu.parent = expandBtn;
-                    menu.anchors.top = parent.bottom;
-                    menu.anchors.right = parent.right;
-                    menu.anchors.topMargin = Appearance.spacing.small;
-                    menu.anchors.bottomMargin = Appearance.spacing.small;
-                }
-            }
-
-            function updateOverlayPos() {
-                if (!root.overlayRoot)
-                    return;
-
-                const overlay = root.overlayRoot;
-                const spacing = Appearance.spacing.small;
-
-                const btnTopLeft = expandBtn.mapToItem(overlay, 0, 0);
-                const btnBottomLeft = expandBtn.mapToItem(overlay, 0, expandBtn.height);
-                const btnTopRight = expandBtn.mapToItem(overlay, expandBtn.width, 0);
-
-                const desiredX = btnTopRight.x - menu.implicitWidth;
-                const desiredY = root.menuOnTop ? (btnTopLeft.y - menu.implicitHeight - spacing)
-                                                : (btnBottomLeft.y + spacing);
-
-                const minX = 0;
-                const maxX = Math.max(0, overlay.width - menu.implicitWidth);
-                const minY = 0;
-                const maxY = Math.max(0, overlay.height - menu.implicitHeight);
-
-                menu.x = Math.min(Math.max(desiredX, minX), maxX);
-                menu.y = Math.min(Math.max(desiredY, minY), maxY);
-                menu.z = 9999;
-            }
-
-            onExpandedChanged: {
-                if (!expanded) {
-                    if (menu.parent !== expandBtn) {
-                        menu.useOverlay = false;
-                        menu.parent = expandBtn;
-                    }
-                    return;
-                }
-
-                // Expanded
-                menu.evaluateOverlayNeed();
-                menu.applyParenting();
-                if (menu.useOverlay)
-                    menu.updateOverlayPos();
-            }
-
-            onImplicitWidthChanged: {
-                if (!expanded) return;
-                const prev = menu.useOverlay;
-                menu.evaluateOverlayNeed();
-                if (menu.useOverlay !== prev) menu.applyParenting();
-                if (menu.useOverlay) menu.updateOverlayPos();
-            }
-            onImplicitHeightChanged: {
-                if (!expanded) return;
-                const prev = menu.useOverlay;
-                menu.evaluateOverlayNeed();
-                if (menu.useOverlay !== prev) menu.applyParenting();
-                if (menu.useOverlay) menu.updateOverlayPos();
-            }
-
-            Connections {
-                target: root.overlayRoot
-                enabled: target && menu.expanded && menu.useOverlay
-                function onWidthChanged() { menu.updateOverlayPos(); }
-                function onHeightChanged() { menu.updateOverlayPos(); }
-            }
-
-            Connections {
-                target: expandBtn
-                enabled: menu.expanded
-                function onXChanged() { menu.updateOverlayPos(); }
-                function onYChanged() { menu.updateOverlayPos(); }
-                function onWidthChanged() { menu.updateOverlayPos(); }
-                function onHeightChanged() { menu.updateOverlayPos(); }
-            }
-
-            states: State {
-                when: root.menuOnTop
-
-                AnchorChanges {
-                    target: menu
-                    anchors.top: undefined
-                    anchors.bottom: expandBtn.top
-                }
-            }
-
-            anchors.top: parent.bottom
-            anchors.right: parent.right
-            anchors.topMargin: Appearance.spacing.small
-            anchors.bottomMargin: Appearance.spacing.small
-        }
+        attachTo: expandBtn
+        attachSideY: root.menuOnTop ? Menu.Top : Menu.Bottom
+        thisSideY: root.menuOnTop ? Menu.Bottom : Menu.Top
+        marginY: Tokens.spacing.small * (root.menuOnTop ? -1 : 1)
     }
 }

@@ -4,14 +4,13 @@ set -euo pipefail
 # Reset WallpaperSwitcher per-monitor defaults.conf based on an active theme.
 #
 # Behavior:
-# - For each connected monitor, rewrite `scripts/WallpaperSwitcher/config/<monitor>/defaults.conf`
+# - For each connected monitor, rewrite the user's WallpaperSwitcher defaults.
 # - For workspaces 1..10:
 #   - If theme.json has wallpapers["N"] and the file is under custom/<theme>/, use it
 #   - Else pick a random image from custom/<theme>/
 # - Stores paths in config as `$HOME/...` (so configs are portable)
 
-configDir="$HOME/.config/quickshell/caelestia"
-switcherConfigDir="$configDir/scripts/WallpaperSwitcher/config"
+switcherConfigDir="${XDG_CONFIG_HOME:-$HOME/.config}/caelestia/wallpaper-switcher"
 
 themesDir="$HOME/.config/caelestia/themes"
 activeFile="$themesDir/.active"

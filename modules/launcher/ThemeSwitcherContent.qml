@@ -1,35 +1,38 @@
 pragma ComponentBehavior: Bound
 
-import qs.components
-import qs.components.controls
-import qs.components.containers
-import qs.services
-import qs.config
-import qs.utils
 import QtQuick
 import QtQuick.Layouts
+import Caelestia.Config
+import qs.components
+import qs.components.containers
+import qs.components.controls
+import qs.services
+import qs.utils
 
 Item {
     id: root
 
-    required property var visibilities
+    required property ScreenState screenState
 
     implicitWidth: parent.width
     implicitHeight: mainColumn.implicitHeight
+
+    Component.onCompleted: Themes.reload()
 
     ColumnLayout {
         id: mainColumn
 
         anchors.fill: parent
-        spacing: Appearance.spacing.smaller
+        spacing: Tokens.spacing.extraSmall
 
         // Create row
         RowLayout {
             Layout.alignment: Qt.AlignHCenter
-            spacing: Appearance.spacing.small
+            spacing: Tokens.spacing.small
 
             StyledTextField {
                 id: nameInput
+
                 Layout.preferredWidth: 320
                 placeholderText: qsTr("Theme name")
             }
@@ -37,21 +40,26 @@ Item {
             IconTextButton {
                 icon: "add"
                 text: qsTr("Create from current")
+                defaultRadius: Tokens.rounding.medium
+
                 onClicked: {
-                    console.log("ThemeSwitcher: Create from current clicked", nameInput.text)
+                    console.log("ThemeSwitcher: Create from current clicked", nameInput.text);
                     if (nameInput.text.trim().length === 0)
                         return;
                     Themes.exportCurrent(nameInput.text.trim());
                     nameInput.text = "";
                 }
-                radius: Appearance.rounding.small
             }
 
             IconTextButton {
                 icon: "layers_clear"
                 text: qsTr("Default mode")
-                onClicked: Themes.deactivate()
-                radius: Appearance.rounding.small
+                defaultRadius: Tokens.rounding.medium
+
+                onClicked: {
+                    root.screenState.launcher = false;
+                    Themes.deactivate();
+                }
             }
         }
 
@@ -66,7 +74,8 @@ Item {
 
             Row {
                 id: listRow
-                spacing: Appearance.spacing.normal
+
+                spacing: Tokens.spacing.medium
 
                 Repeater {
                     model: Themes.themes
@@ -78,7 +87,7 @@ Item {
 
                         width: 280
                         height: 200
-                        radius: Appearance.rounding.normal
+                        radius: Tokens.rounding.large
                         color: Colours.palette.m3surface
                         border.width: 1
                         border.color: Colours.palette.m3outlineVariant
@@ -114,25 +123,26 @@ Item {
                             // Floating overlay content
                             ColumnLayout {
                                 anchors.fill: parent
-                                anchors.margins: Appearance.padding.normal
-                                spacing: Appearance.spacing.small
+                                anchors.margins: Tokens.padding.medium
+                                spacing: Tokens.spacing.small
 
                                 // Theme name at top (centered horizontally)
                                 StyledText {
                                     Layout.alignment: Qt.AlignTop | Qt.AlignHCenter
                                     text: card.modelData.name
                                     elide: Text.ElideRight
-                                    font.pointSize: Appearance.font.size.large
-                                    font.bold: true
+                                    font: Tokens.font.body.builders.large.weight(Font.Bold).build()
                                     color: "white"
                                 }
 
-                                Item { Layout.fillHeight: true }
+                                Item {
+                                    Layout.fillHeight: true
+                                }
 
                                 // Buttons at bottom (centered horizontally with space between)
                                 RowLayout {
                                     Layout.alignment: Qt.AlignBottom | Qt.AlignHCenter
-                                    spacing: Appearance.spacing.normal
+                                    spacing: Tokens.spacing.medium
 
                                     IconTextButton {
                                         Layout.fillWidth: true
@@ -140,8 +150,12 @@ Item {
                                         Layout.alignment: Qt.AlignHCenter
                                         icon: "done"
                                         text: qsTr("Apply")
-                                        onClicked: Themes.apply(card.modelData.name)
-                                        radius: Appearance.rounding.small
+                                        defaultRadius: Tokens.rounding.medium
+
+                                        onClicked: {
+                                            root.screenState.launcher = false;
+                                            Themes.apply(card.modelData.name);
+                                        }
                                     }
 
                                     IconTextButton {
@@ -152,8 +166,9 @@ Item {
                                         text: qsTr("Delete")
                                         label.color: Colours.palette.m3error
                                         stateLayer.color: Colours.palette.m3error
+                                        defaultRadius: Tokens.rounding.medium
+
                                         onClicked: Themes.remove(card.modelData.name)
-                                        radius: Appearance.rounding.small
                                     }
                                 }
                             }
@@ -163,7 +178,7 @@ Item {
                                 anchors.centerIn: parent
                                 text: card.modelData.preview && card.modelData.preview.length > 0 ? "" : "No preview"
                                 color: Colours.palette.m3onSurfaceVariant
-                                font.pointSize: Appearance.font.size.small
+                                font: Tokens.font.body.small
                                 visible: !parent.children[0].visible
                             }
                         }
@@ -172,8 +187,4 @@ Item {
             }
         }
     }
-
-    Component.onCompleted: Themes.reload()
 }
-
-

@@ -1,5 +1,6 @@
 #!/bin/bash
-configDir=$HOME/.config/quickshell/caelestia 
+script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+switcher_config="${XDG_CONFIG_HOME:-$HOME/.config}/caelestia/wallpaper-switcher"
 hyprDir=$HOME/.config/hypr
 
 new_wallpaper=""
@@ -66,8 +67,23 @@ fi
 
 #############################################
 
-current_config=$configDir/scripts/WallpaperSwitcher/config/$monitor/defaults.conf # config file (used by auto.sh)
+current_config="$switcher_config/$monitor/defaults.conf" # config file (used by auto.sh)
 current_workspace=$(hyprctl monitors | awk -v monitor="$monitor" '/Monitor/ {m=$2} /active workspace/ && m == monitor {print $3}')
+
+if [ ! -f "$current_config" ]; then
+    mkdir -p "$(dirname "$current_config")"
+    if [ -f "$script_dir/config/$monitor/defaults.conf" ]; then
+        cp "$script_dir/config/$monitor/defaults.conf" "$current_config"
+    elif [ -f "$switcher_config/defaults.conf" ]; then
+        cp "$switcher_config/defaults.conf" "$current_config"
+    elif [ -f "$script_dir/config/defaults.conf" ]; then
+        cp "$script_dir/config/defaults.conf" "$current_config"
+    else
+        for workspace in {1..10}; do
+            printf 'w-%s=\n' "$workspace"
+        done > "$current_config"
+    fi
+fi
 
 #############################################
 
@@ -84,7 +100,7 @@ sed -i "s|w-${workspace_id}=.*|w-${workspace_id}=|" $current_config # set wallpa
 #############################################
 
 if [ "$workspace_id" = "$current_workspace" ]; then
-    $configDir/scripts/WallpaperSwitcher/w.sh "$new_wallpaper" $monitor & # set wallpaper
+    "$script_dir/w.sh" "$new_wallpaper" "$monitor" & # set wallpaper
 fi
 
 # #############################################
