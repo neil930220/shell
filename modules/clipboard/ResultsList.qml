@@ -47,8 +47,7 @@ Item {
                         anchors.horizontalCenter: parent.horizontalCenter
                         text: Clipboard.filterText || Clipboard.filterType !== "all" ? qsTr("No matching clipboard items") : qsTr("No clipboard history")
                         color: Colours.palette.m3onSurfaceVariant
-                        font: Tokens.font.title.medium
-                        font.weight: 500
+                        font: Tokens.font.title.builders.medium.weight(Font.Medium).build()
                     }
 
                     StyledText {

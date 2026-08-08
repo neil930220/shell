@@ -35,8 +35,7 @@ StyledRect {
                 anchors.centerIn: parent
                 text: root.item.index.toString()
                 color: Colours.palette.m3onSecondaryContainer
-                font: Tokens.font.label.small
-                font.weight: 600
+                font: Tokens.font.label.builders.small.weight(Font.DemiBold).build()
             }
         }
 

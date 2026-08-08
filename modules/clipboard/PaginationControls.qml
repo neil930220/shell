@@ -50,8 +50,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 text: qsTr("Page %1 of %2").arg(Clipboard.currentPage + 1).arg(Clipboard.totalPages)
                 color: Colours.palette.m3onSurface
-                font: Tokens.font.body.medium
-                font.weight: 500
+                font: Tokens.font.body.builders.medium.weight(Font.Medium).build()
             }
 
             StyledText {
